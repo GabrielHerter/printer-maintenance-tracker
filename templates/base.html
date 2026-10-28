@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} Gestão de Manutenção de Impressoras{% endblock %}</title>
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- HTMX (CDN) -->
+    <script src="https://unpkg.com/htmx.org@2.0.3" crossorigin="anonymous"></script>
+
+    <!-- Chart.js (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-full flex flex-col text-slate-800 antialiased" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+    <!-- Barra de Navegação Responsiva -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo / Nome do Sistema -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-brand-600 p-2 rounded-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg tracking-tight">PrintTrack</span>
+                        <span class="hidden sm:inline-block text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded ml-1 border border-slate-700">
+                            Controle de Manutenção
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Links Desktop -->
+                <nav class="hidden md:flex items-center space-x-1">
+                    <a href="#"
+                       class="px-3 py-2 rounded-md text-sm font-medium text-white bg-slate-800 hover:bg-slate-700 transition">
+                        Painel &amp; Manutenções
+                    </a>
+                    <a href="#"
+                       class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                        Modelos
+                    </a>
+                    <a href="#"
+                       class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                        Números de Série
+                    </a>
+                    <a href="#"
+                       class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                        Setores
+                    </a>
+                    <a href="#"
+                       class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                        Tipos de Defeito
+                    </a>
+                </nav>
+
+                <!-- Botão Mobile Menu -->
+                <div class="md:hidden flex items-center">
+                    <button type="button"
+                            onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
+                            class="inline-flex items-center justify-center p-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500"
+                            aria-controls="mobile-menu"
+                            aria-expanded="false">
+                        <span class="sr-only">Abrir menu principal</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Mobile -->
+        <div class="hidden md:hidden border-t border-slate-800 bg-slate-900" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-slate-800">
+                    Painel &amp; Manutenções
+                </a>
+                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white">
+                    Modelos
+                </a>
+                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white">
+                    Números de Série
+                </a>
+                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white">
+                    Setores
+                </a>
+                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white">
+                    Tipos de Defeito
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Área de Mensagens / Alertas Globais -->
+    {% if messages %}
+    <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 mt-4 space-y-2">
+        {% for message in messages %}
+        <div class="p-4 rounded-lg border flex items-center justify-between shadow-sm
+            {% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-800
+            {% elif message.tags == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-800
+            {% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %}">
+            <span class="text-sm font-medium">{{ message }}</span>
+            <button type="button" onclick="this.parentElement.remove()" class="text-current opacity-60 hover:opacity-100">
+                &times;
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Container Global para Modais HTMX -->
+    <div id="modal-container"></div>
+
+    <!-- Rodapé -->
+    <footer class="bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+            <span>Sistema de Controle de Manutenção de Impressoras</span>
+            <span>Django 5 &bull; HTMX &bull; Tailwind CSS &bull; PostgreSQL</span>
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+
