@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 from cadastros.models import ModeloImpressora, NumeroSerie, Setor, TipoDefeito
 
@@ -77,6 +78,16 @@ class Manutencao(models.Model):
 
     def __str__(self) -> str:
         return f"{self.modelo} ({self.numero_serie}) - {self.get_situacao_display()}"
+
+    @property
+    def dias_em_aberto(self) -> int:
+        """Retorna a quantidade de dias em manutenção até hoje para itens não resolvidos."""
+        if self.data_retorno is not None and self.tempo_manutencao_dias is not None:
+            return self.tempo_manutencao_dias
+        if not self.data_abertura:
+            return 0
+        hoje = timezone.localdate()
+        return max(0, (hoje - self.data_abertura).days)
 
     def clean(self) -> None:
         super().clean()

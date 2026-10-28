@@ -58,7 +58,7 @@
 
                 <!-- Links Desktop -->
                 <nav class="hidden md:flex items-center space-x-1">
-                    <a href="#"
+                    <a href="{% url 'manutencoes:manutencao_list' %}"
                        class="px-3 py-2 rounded-md text-sm font-medium {% if not entity_key %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         Painel &amp; Manutenções
                     </a>
@@ -100,7 +100,7 @@
         <!-- Menu Mobile -->
         <div class="hidden md:hidden border-t border-slate-800 bg-slate-900" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium {% if not entity_key %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <a href="{% url 'manutencoes:manutencao_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if not entity_key %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     Painel &amp; Manutenções
                 </a>
                 <a href="{% url 'cadastros:modelo_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'modelo' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
@@ -153,13 +153,15 @@
     </footer>
 
     <script>
-        // Fecha o modal ao receber evento HX-Trigger "closeModal" ou pressionar ESC
-        document.body.addEventListener('closeModal', function () {
+        // Fecha o modal ao receber evento HX-Trigger "closeModal" ou "manutencaoAtualizada" ou pressionar ESC
+        function clearModalContainer() {
             const container = document.getElementById('modal-container');
             if (container) {
                 container.innerHTML = '';
             }
-        });
+        }
+        document.body.addEventListener('closeModal', clearModalContainer);
+        document.body.addEventListener('manutencaoAtualizada', clearModalContainer);
 
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
