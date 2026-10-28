@@ -12,6 +12,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.views import View
 from django.views.decorators.http import require_GET, require_http_methods
 
 from cadastros.models import ModeloImpressora, NumeroSerie, Setor, TipoDefeito
@@ -299,6 +300,42 @@ def manutencao_list(request: HttpRequest) -> HttpResponse:
     return render(request, 'manutencoes/manutencao_list.html', context)
 
 
+class DashboardView(View):
+    """
+    Tela Analítica Gerencial (/dashboard/) focada 100% nos indicadores (KPIs)
+    e nos 4 gráficos interativos do Chart.js.
+    """
+
+    template_name = 'manutencoes/dashboard.html'
+
+    def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        base_qs = Manutencao.objects.all()
+        filtered_qs, filter_state = _apply_filters(base_qs, request.GET)
+        stats = _get_stats(filtered_qs)
+
+        context = {
+            'stats': stats,
+            'total_manutencoes': stats['total'],
+            'em_manutencao': stats['em_manutencao'],
+            'resolvidas': stats['resolvidos'],
+            'mttr_dias': stats['tempo_medio'],
+            'filtros': filter_state,
+            'situacao_choices': SituacaoManutencao.choices,
+            'modelos_filtro': ModeloImpressora.objects.filter(ativo=True).order_by('nome'),
+            'setores_filtro': Setor.objects.filter(ativo=True).order_by('nome'),
+            'defeitos_filtro': TipoDefeito.objects.filter(ativo=True).order_by('descricao'),
+            'hoje_iso': timezone.localdate().strftime('%Y-%m-%d'),
+        }
+
+        if _is_htmx(request):
+            return render(request, 'manutencoes/partials/dashboard_kpis.html', context)
+
+        return render(request, self.template_name, context)
+
+
+dashboard = DashboardView.as_view()
+
+
 @require_http_methods(['GET', 'POST'])
 def manutencao_create(request: HttpRequest) -> HttpResponse:
     if request.method == 'POST':
@@ -311,7 +348,7 @@ def manutencao_create(request: HttpRequest) -> HttpResponse:
                 context = _build_list_context(request)
                 context['manutencao_criada'] = manutencao
                 context['oob_update_table'] = True
-                context['oob_stats'] = True
+                context['oob_stats'] = False
                 response = render(
                     request,
                     'manutencoes/partials/oob_mutacao_response.html',
@@ -359,7 +396,7 @@ def manutencao_update(request: HttpRequest, pk: int) -> HttpResponse:
                     'stats': stats,
                     'hoje_iso': timezone.localdate().strftime('%Y-%m-%d'),
                     'oob_row': True,
-                    'oob_stats': True,
+                    'oob_stats': False,
                 }
                 response = render(
                     request,
@@ -448,7 +485,7 @@ def dar_baixa_manutencao(request: HttpRequest, pk: int) -> HttpResponse:
         'manutencao': manutencao,
         'stats': stats,
         'hoje_iso': hoje_iso,
-        'oob_stats': True,
+        'oob_stats': False,
     }
     response = render(request, 'manutencoes/partials/linha_manutencao.html', context)
     response['HX-Trigger'] = 'manutencaoAtualizada'
@@ -464,7 +501,7 @@ def manutencao_delete(request: HttpRequest, pk: int) -> HttpResponse:
         stats = _get_stats()
         context = {
             'stats': stats,
-            'oob_stats': True,
+            'oob_stats': False,
         }
         response = render(
             request,

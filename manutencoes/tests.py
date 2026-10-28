@@ -353,3 +353,38 @@ class ManutencoesOperationalModuleTests(TestCase):
             sheet_xml = zf.read('xl/worksheets/sheet1.xml').decode('utf-8')
             self.assertIn(self.serial_ativo_2.serial, sheet_xml)
             self.assertNotIn(self.serial_ativo.serial, sheet_xml)
+
+    def test_operational_list_and_dashboard_views_are_decoupled(self):
+        Manutencao.objects.create(
+            modelo=self.modelo_ativo,
+            numero_serie=self.serial_ativo,
+            setor=self.setor_ativo,
+            defeito=self.defeito_ativo,
+            data_abertura=date(2026, 10, 1),
+            data_retorno=date(2026, 10, 4),
+        )
+
+        # 1. Tela Operacional (/) não deve renderizar os 4 gráficos do Chart.js
+        list_url = reverse('manutencoes:manutencao_list')
+        resp_list = self.client.get(list_url)
+        self.assertEqual(resp_list.status_code, 200)
+        self.assertContains(resp_list, 'Planilha Operacional de Manutenções')
+        self.assertContains(resp_list, 'form-filtros-manutencao')
+        self.assertNotContains(resp_list, 'id="chart-situacao"')
+        self.assertNotContains(resp_list, 'id="chart-modelos"')
+
+        # 2. Tela de Dashboard (/dashboard/) deve renderizar KPIs + 4 gráficos em grid lg:grid-cols-2
+        dashboard_url = reverse('manutencoes:dashboard')
+        resp_dash = self.client.get(dashboard_url)
+        self.assertEqual(resp_dash.status_code, 200)
+        self.assertContains(resp_dash, 'Dashboard Analítico de Manutenções')
+        self.assertContains(resp_dash, 'id="painel-indicadores"')
+        self.assertContains(resp_dash, 'id="chart-situacao"')
+        self.assertContains(resp_dash, 'id="chart-modelos"')
+        self.assertContains(resp_dash, 'id="chart-setores"')
+        self.assertContains(resp_dash, 'id="chart-defeitos"')
+        self.assertContains(resp_dash, 'lg:grid-cols-2')
+        self.assertEqual(resp_dash.context['total_manutencoes'], 1)
+        self.assertEqual(resp_dash.context['resolvidas'], 1)
+        self.assertEqual(resp_dash.context['mttr_dias'], 3.0)
+

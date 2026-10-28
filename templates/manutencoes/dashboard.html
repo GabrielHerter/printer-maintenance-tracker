@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Analítico de Manutenções | PrintTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Cabeçalho do Dashboard + Filtro Rápido de Período e Setor -->
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <h1 id="titulo-dashboard-analitico" class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                        Dashboard Analítico de Manutenções
+                    </h1>
+                    <span id="dashboard-sync-badge" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                        Sincronizado
+                    </span>
+                </div>
+                <p class="mt-1 text-sm text-slate-500">
+                    Visão gerencial consolidada de indicadores (KPIs), MTTR e volume de chamados via PostgreSQL e Chart.js.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="{% url 'manutencoes:manutencao_list' %}"
+                   class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Ir para Planilha Operacional
+                </a>
+            </div>
+        </div>
+
+        <!-- Barra de Filtro Rápido Gerencial (Período + Setor + Atualizar) -->
+        <form id="form-filtros-dashboard"
+              method="get"
+              action="{% url 'manutencoes:dashboard' %}"
+              hx-get="{% url 'manutencoes:dashboard_kpis_partial' %}"
+              hx-target="#painel-indicadores"
+              hx-swap="outerHTML"
+              hx-trigger="change from:.filtro-dashboard, submit"
+              class="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+
+            <!-- Data Inicial -->
+            <div class="lg:col-span-3">
+                <label for="dashboard-data-inicio" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    Data Inicial
+                </label>
+                <input type="date"
+                       name="data_inicio"
+                       id="dashboard-data-inicio"
+                       value="{{ filtros.data_inicio }}"
+                       class="filtro-dashboard w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+            </div>
+
+            <!-- Data Final -->
+            <div class="lg:col-span-3">
+                <label for="dashboard-data-fim" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    Data Final
+                </label>
+                <input type="date"
+                       name="data_fim"
+                       id="dashboard-data-fim"
+                       value="{{ filtros.data_fim }}"
+                       class="filtro-dashboard w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+            </div>
+
+            <!-- Setor -->
+            <div class="lg:col-span-4">
+                <label for="dashboard-setor" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    Setor
+                </label>
+                <select name="setor"
+                        id="dashboard-setor"
+                        class="filtro-dashboard w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                    <option value="">Todos os setores</option>
+                    {% for s in setores_filtro %}
+                        <option value="{{ s.pk }}" {% if filtros.setor_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Botões de Ação (Atualizar / Limpar) -->
+            <div class="lg:col-span-2 flex items-center gap-2">
+                <button type="submit"
+                        id="btn-atualizar-dashboard"
+                        class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Atualizar
+                </button>
+                <button type="button"
+                        id="btn-limpar-dashboard"
+                        title="Limpar filtros de período e setor"
+                        class="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer">
+                    Limpar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 4 Cards de KPIs no Topo -->
+    {% include "manutencoes/partials/dashboard_kpis.html" %}
+
+    <!-- Grid Espaçoso de 2 Colunas com os 4 Gráficos do Chart.js -->
+    <section aria-label="Gráficos Analíticos de Manutenção" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Gráfico 1: Distribuição por Situação -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col">
+            <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700">
+                        Distribuição por Situação
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Proporção entre impressoras em reparo e ordens concluídas</p>
+                </div>
+                <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-mono font-semibold text-slate-500">Status</span>
+            </div>
+            <div class="relative h-72 w-full flex-1">
+                <canvas id="chart-situacao" aria-label="Gráfico de distribuição por situação" role="img"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfico 2: Top 5 Modelos com Mais Chamados -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col">
+            <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700">
+                        Top 5 Modelos com Mais Chamados
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Equipamentos com maior incidência de manutenções</p>
+                </div>
+                <span class="rounded-md bg-brand-50 px-2 py-0.5 text-[11px] font-mono font-semibold text-brand-600">Top 5</span>
+            </div>
+            <div class="relative h-72 w-full flex-1">
+                <canvas id="chart-modelos" aria-label="Gráfico Top 5 modelos de impressora" role="img"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfico 3: Top 5 Setores Demandantes -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col">
+            <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700">
+                        Top 5 Setores Demandantes
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Unidades hospitalares/corporativas com maior volume de chamados</p>
+                </div>
+                <span class="rounded-md bg-sky-50 px-2 py-0.5 text-[11px] font-mono font-semibold text-sky-600">Top 5</span>
+            </div>
+            <div class="relative h-72 w-full flex-1">
+                <canvas id="chart-setores" aria-label="Gráfico Top 5 setores com maior volume" role="img"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfico 4: Top 5 Defeitos Recorrentes -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col">
+            <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700">
+                        Top 5 Defeitos Recorrentes
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Principais falhas técnicas registradas nas ordens de serviço</p>
+                </div>
+                <span class="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-mono font-semibold text-indigo-600">Top 5</span>
+            </div>
+            <div class="relative h-72 w-full flex-1">
+                <canvas id="chart-defeitos" aria-label="Gráfico Top 5 tipos de defeito mais recorrentes" role="img"></canvas>
+            </div>
+        </div>
+
+    </section>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    (function () {
+        const CHARTS_API_URL = "{% url 'manutencoes:dashboard_charts_api' %}";
+        let chartSituacao = null;
+        let chartModelos = null;
+        let chartSetores = null;
+        let chartDefeitos = null;
+
+        function truncateLabel(label, maxLen = 32) {
+            if (!label) return '—';
+            const str = String(label);
+            return str.length > maxLen ? str.slice(0, maxLen - 1) + '…' : str;
+        }
+
+        function buildChartsQueryString() {
+            const filterForm = document.getElementById('form-filtros-dashboard');
+            if (!filterForm) return '';
+            const params = new URLSearchParams(new FormData(filterForm));
+            for (const [key, val] of Array.from(params.entries())) {
+                if (!val || !String(val).trim()) {
+                    params.delete(key);
+                }
+            }
+            const qs = params.toString();
+            return qs ? ('?' + qs) : '';
+        }
+
+        function initCharts() {
+            if (typeof Chart === 'undefined') return;
+
+            const ctxSituacao = document.getElementById('chart-situacao');
+            const ctxModelos = document.getElementById('chart-modelos');
+            const ctxSetores = document.getElementById('chart-setores');
+            const ctxDefeitos = document.getElementById('chart-defeitos');
+
+            if (ctxSituacao) {
+                chartSituacao = new Chart(ctxSituacao, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Em Manutenção', 'Resolvido'],
+                        datasets: [{
+                            data: [0, 0],
+                            backgroundColor: ['#f59e0b', '#10b981'],
+                            borderColor: ['#ffffff', '#ffffff'],
+                            borderWidth: 2,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '64%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 16,
+                                    font: { size: 12, weight: '600' }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (ctxModelos) {
+                chartModelos = new Chart(ctxModelos, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Manutenções',
+                            data: [],
+                            backgroundColor: '#2563eb',
+                            borderRadius: 6,
+                            maxBarThickness: 36
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    font: { size: 11 },
+                                    callback: function (value) {
+                                        return truncateLabel(this.getLabelForValue(value), 22);
+                                    }
+                                },
+                                grid: { display: false }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0, font: { size: 11 } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (ctxSetores) {
+                chartSetores = new Chart(ctxSetores, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Chamados',
+                            data: [],
+                            backgroundColor: '#0ea5e9',
+                            borderRadius: 5,
+                            maxBarThickness: 28
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: { precision: 0, font: { size: 11 } }
+                            },
+                            y: {
+                                ticks: {
+                                    font: { size: 11 },
+                                    callback: function (value) {
+                                        return truncateLabel(this.getLabelForValue(value), 32);
+                                    }
+                                },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (ctxDefeitos) {
+                chartDefeitos = new Chart(ctxDefeitos, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Ocorrências',
+                            data: [],
+                            backgroundColor: '#6366f1',
+                            borderRadius: 5,
+                            maxBarThickness: 28
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: { precision: 0, font: { size: 11 } }
+                            },
+                            y: {
+                                ticks: {
+                                    font: { size: 11 },
+                                    callback: function (value) {
+                                        return truncateLabel(this.getLabelForValue(value), 32);
+                                    }
+                                },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        async function fetchAndUpdateCharts() {
+            const badge = document.getElementById('dashboard-sync-badge');
+            if (badge) {
+                badge.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping"></span> Atualizando...';
+            }
+
+            try {
+                const response = await fetch(CHARTS_API_URL + buildChartsQueryString(), {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) throw new Error('Falha ao carregar dados analíticos');
+                const payload = await response.json();
+
+                if (chartSituacao && payload.situacao) {
+                    chartSituacao.data.labels = payload.situacao.labels || ['Em Manutenção', 'Resolvido'];
+                    chartSituacao.data.datasets[0].data = payload.situacao.data || [0, 0];
+                    chartSituacao.update();
+                }
+
+                if (chartModelos && payload.top_modelos) {
+                    chartModelos.data.labels = payload.top_modelos.labels || [];
+                    chartModelos.data.datasets[0].data = payload.top_modelos.data || [];
+                    chartModelos.update();
+                }
+
+                if (chartSetores && payload.top_setores) {
+                    chartSetores.data.labels = payload.top_setores.labels || [];
+                    chartSetores.data.datasets[0].data = payload.top_setores.data || [];
+                    chartSetores.update();
+                }
+
+                if (chartDefeitos && payload.top_defeitos) {
+                    chartDefeitos.data.labels = payload.top_defeitos.labels || [];
+                    chartDefeitos.data.datasets[0].data = payload.top_defeitos.data || [];
+                    chartDefeitos.update();
+                }
+
+                if (badge) {
+                    badge.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Sincronizado';
+                }
+            } catch (err) {
+                console.error('Erro ao atualizar gráficos do dashboard:', err);
+                if (badge) {
+                    badge.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-red-500"></span> Erro de sincronização';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initCharts();
+            fetchAndUpdateCharts();
+
+            const filterForm = document.getElementById('form-filtros-dashboard');
+            if (filterForm) {
+                filterForm.addEventListener('change', function () {
+                    fetchAndUpdateCharts();
+                });
+                filterForm.addEventListener('submit', function () {
+                    fetchAndUpdateCharts();
+                });
+            }
+
+            const btnLimpar = document.getElementById('btn-limpar-dashboard');
+            if (btnLimpar && filterForm) {
+                btnLimpar.addEventListener('click', function () {
+                    filterForm.reset();
+                    const inputs = filterForm.querySelectorAll('input[type="date"], select');
+                    inputs.forEach(function (el) { el.value = ''; });
+                    if (typeof htmx !== 'undefined') {
+                        htmx.trigger(filterForm, 'submit');
+                    }
+                    fetchAndUpdateCharts();
+                });
+            }
+        });
+
+        document.body.addEventListener('manutencaoAtualizada', function () {
+            fetchAndUpdateCharts();
+        });
+    })();
+</script>
+{% endblock %}
+

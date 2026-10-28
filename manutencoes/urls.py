@@ -6,7 +6,9 @@ app_name = 'manutencoes'
 
 urlpatterns = [
     path('', views.manutencao_list, name='manutencao_list'),
+    path('', views.manutencao_list, name='lista'),
     path('manutencoes/', views.manutencao_list, name='index'),
+    path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
     path('dashboard/kpis/', views.dashboard_kpis_partial, name='dashboard_kpis_partial'),
     path('api/dashboard/charts/', views.dashboard_charts_api, name='dashboard_charts_api'),
     path('exportar/', views.exportar_manutencoes, name='exportar_manutencoes'),

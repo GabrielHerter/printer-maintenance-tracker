@@ -59,23 +59,27 @@
                 <!-- Links Desktop -->
                 <nav class="hidden md:flex items-center space-x-1">
                     <a href="{% url 'manutencoes:manutencao_list' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if not entity_key %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
-                        Painel &amp; Manutenções
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if not entity_key and request.resolver_match.url_name != 'dashboard' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                        Manutenções
+                    </a>
+                    <a href="{% url 'manutencoes:dashboard' %}"
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'dashboard' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                        Dashboard
                     </a>
                     <a href="{% url 'cadastros:modelo_list' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'modelo' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'modelo' or request.resolver_match.url_name == 'modelo_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         Modelos
                     </a>
                     <a href="{% url 'cadastros:numero_serie_list' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'numero_serie' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'numero_serie' or request.resolver_match.url_name == 'numero_serie_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         Números de Série
                     </a>
                     <a href="{% url 'cadastros:setor_list' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'setor' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'setor' or request.resolver_match.url_name == 'setor_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         Setores
                     </a>
                     <a href="{% url 'cadastros:tipo_defeito_list' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'tipo_defeito' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'tipo_defeito' or request.resolver_match.url_name == 'tipo_defeito_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         Tipos de Defeito
                     </a>
                 </nav>
@@ -100,19 +104,22 @@
         <!-- Menu Mobile -->
         <div class="hidden md:hidden border-t border-slate-800 bg-slate-900" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="{% url 'manutencoes:manutencao_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if not entity_key %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
-                    Painel &amp; Manutenções
+                <a href="{% url 'manutencoes:manutencao_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if not entity_key and request.resolver_match.url_name != 'dashboard' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                    Manutenções
                 </a>
-                <a href="{% url 'cadastros:modelo_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'modelo' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <a href="{% url 'manutencoes:dashboard' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'dashboard' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                    Dashboard
+                </a>
+                <a href="{% url 'cadastros:modelo_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'modelo' or request.resolver_match.url_name == 'modelo_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     Modelos
                 </a>
-                <a href="{% url 'cadastros:numero_serie_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'numero_serie' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <a href="{% url 'cadastros:numero_serie_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'numero_serie' or request.resolver_match.url_name == 'numero_serie_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     Números de Série
                 </a>
-                <a href="{% url 'cadastros:setor_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'setor' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <a href="{% url 'cadastros:setor_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'setor' or request.resolver_match.url_name == 'setor_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     Setores
                 </a>
-                <a href="{% url 'cadastros:tipo_defeito_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'tipo_defeito' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
+                <a href="{% url 'cadastros:tipo_defeito_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'tipo_defeito' or request.resolver_match.url_name == 'tipo_defeito_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     Tipos de Defeito
                 </a>
             </div>
