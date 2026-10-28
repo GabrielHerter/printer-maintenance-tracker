@@ -1,33 +1,40 @@
 {% extends "base.html" %}
 
-{% block title %}Planilha Operacional de Manutenções | PrintTrack{% endblock %}
+{% block title %}Planilha Operacional de Manutenções | HCPF - STI{% endblock %}
 
 {% block content %}
 <div class="space-y-5">
 
     <!-- Cabeçalho Operacional + Ações Principais -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-        <div>
-            <div class="flex flex-wrap items-center gap-2.5">
-                <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                    Planilha Operacional de Manutenções
-                </h1>
-                <span class="inline-flex items-center gap-1.5 rounded-md bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-600/20">
-                    <span class="h-1.5 w-1.5 rounded-full bg-brand-600"></span>
-                    Tempo Real &bull; HTMX
-                </span>
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 border-l-4 border-l-hc-blue shadow-sm">
+        <div class="flex items-start gap-3.5">
+            <!-- Detalhe lateral institucional HCPF (Azul + Amarelo Ouro) -->
+            <div class="hidden sm:flex flex-col w-1.5 self-stretch rounded-full overflow-hidden shrink-0">
+                <span class="flex-1 bg-hc-blue"></span>
+                <span class="h-3 bg-hc-yellow"></span>
             </div>
-            <p class="mt-1 text-sm text-slate-500">
-                Acompanhamento de ordens de reparo de impressoras, prazos de conserto e baixa rápida diretamente na linha.
-            </p>
+            <div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <h1 class="text-xl sm:text-2xl font-bold text-hc-navy tracking-tight">
+                        Planilha Operacional de Manutenções
+                    </h1>
+                    <span class="inline-flex items-center gap-1.5 rounded-md bg-hc-bg px-2.5 py-0.5 text-xs font-semibold text-hc-blue ring-1 ring-inset ring-hc-blue/20">
+                        <span class="h-2 w-2 rounded-full bg-hc-yellow ring-1 ring-hc-blue/40"></span>
+                        STI &bull; Tempo Real
+                    </span>
+                </div>
+                <p class="mt-1 text-sm text-slate-600">
+                    Acompanhamento de ordens de reparo de impressoras do HCPF, prazos de conserto e baixa rápida diretamente na linha.
+                </p>
+            </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
             <a href="{% url 'manutencoes:exportar_manutencoes_formato' 'csv' %}{% if filter_querystring %}?{{ filter_querystring }}{% endif %}"
                data-export-base="{% url 'manutencoes:exportar_manutencoes_formato' 'csv' %}"
                onclick="return exportarComFiltrosAtuais(this);"
-               class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 transition">
-                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-hc-navy focus:outline-none focus:ring-2 focus:ring-hc-blue/30 transition">
+                <svg class="w-4 h-4 text-hc-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -49,9 +56,9 @@
                     hx-get="{% url 'manutencoes:manutencao_create' %}"
                     hx-target="#modal-container"
                     hx-swap="innerHTML"
-                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-hc-blue hover:bg-hc-blue-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-hc-blue focus:ring-offset-2 transition cursor-pointer">
+                <svg class="w-4 h-4 text-hc-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                 </svg>
                 Nova Manutenção
             </button>
@@ -71,7 +78,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
             <!-- Busca por Número de Série -->
             <div class="lg:col-span-3">
-                <label for="filtro-serial" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label for="filtro-serial" class="block text-xs font-bold text-hc-navy uppercase tracking-wider mb-1">
                     Nº de Série
                 </label>
                 <div class="relative">
@@ -86,18 +93,18 @@
                            id="filtro-serial"
                            value="{{ filtros.q }}"
                            placeholder="Ex: CNF8G1M854..."
-                           class="w-full rounded-lg border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs sm:text-sm font-mono uppercase text-slate-900 placeholder-slate-400 focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                           class="w-full rounded-lg border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs sm:text-sm font-mono uppercase text-slate-900 placeholder-slate-400 focus:border-hc-blue focus:bg-white focus:outline-none focus:ring-2 focus:ring-hc-blue/20">
                 </div>
             </div>
 
             <!-- Filtro por Situação -->
             <div class="lg:col-span-2">
-                <label for="filtro-situacao" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label for="filtro-situacao" class="block text-xs font-bold text-hc-navy uppercase tracking-wider mb-1">
                     Situação
                 </label>
                 <select name="situacao"
                         id="filtro-situacao"
-                        class="filtro-select w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                        class="filtro-select w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:border-hc-blue focus:bg-white focus:outline-none focus:ring-2 focus:ring-hc-blue/20">
                     <option value="">Todas as situações</option>
                     <option value="MANUTENCAO" {% if filtros.situacao == 'MANUTENCAO' %}selected{% endif %}>Em Manutenção</option>
                     <option value="RESOLVIDO" {% if filtros.situacao == 'RESOLVIDO' %}selected{% endif %}>Resolvido</option>
@@ -106,12 +113,15 @@
 
             <!-- Filtro por Setor -->
             <div class="lg:col-span-2">
-                <label for="filtro-setor" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label for="filtro-setor" class="block text-xs font-bold text-hc-navy uppercase tracking-wider mb-1">
                     Setor
                 </label>
                 <select name="setor"
                         id="filtro-setor"
-                        class="filtro-select w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                        placeholder="Todos os setores"
+                        data-placeholder="Todos os setores"
+                        autocomplete="off"
+                        class="js-searchable-select filtro-select w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:border-hc-blue focus:bg-white focus:outline-none focus:ring-2 focus:ring-hc-blue/20">
                     <option value="">Todos os setores</option>
                     {% for s in setores_filtro %}
                         <option value="{{ s.pk }}" {% if filtros.setor_id == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.nome }}</option>
@@ -121,12 +131,15 @@
 
             <!-- Filtro por Modelo -->
             <div class="lg:col-span-2">
-                <label for="filtro-modelo" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label for="filtro-modelo" class="block text-xs font-bold text-hc-navy uppercase tracking-wider mb-1">
                     Modelo
                 </label>
                 <select name="modelo"
                         id="filtro-modelo"
-                        class="filtro-select w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                        placeholder="Todos os modelos"
+                        data-placeholder="Todos os modelos"
+                        autocomplete="off"
+                        class="js-searchable-select filtro-select w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:border-hc-blue focus:bg-white focus:outline-none focus:ring-2 focus:ring-hc-blue/20">
                     <option value="">Todos os modelos</option>
                     {% for m in modelos_filtro %}
                         <option value="{{ m.pk }}" {% if filtros.modelo_id == m.pk|stringformat:"s" %}selected{% endif %}>{{ m.nome }}</option>
@@ -137,37 +150,37 @@
             <!-- Intervalo de Datas (Abertura) -->
             <div class="lg:col-span-3 grid grid-cols-2 gap-2">
                 <div>
-                    <label for="filtro-data-inicio" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    <label for="filtro-data-inicio" class="block text-xs font-bold text-hc-navy uppercase tracking-wider mb-1">
                         Abertura De
                     </label>
                     <input type="date"
                            name="data_inicio"
                            id="filtro-data-inicio"
                            value="{{ filtros.data_inicio }}"
-                           class="filtro-data w-full rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-2 text-xs sm:text-sm text-slate-800 focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                           class="filtro-data w-full rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-2 text-xs sm:text-sm text-slate-800 focus:border-hc-blue focus:bg-white focus:outline-none focus:ring-2 focus:ring-hc-blue/20">
                 </div>
                 <div>
-                    <label for="filtro-data-fim" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    <label for="filtro-data-fim" class="block text-xs font-bold text-hc-navy uppercase tracking-wider mb-1">
                         Até
                     </label>
                     <input type="date"
                            name="data_fim"
                            id="filtro-data-fim"
                            value="{{ filtros.data_fim }}"
-                           class="filtro-data w-full rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-2 text-xs sm:text-sm text-slate-800 focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                           class="filtro-data w-full rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-2 text-xs sm:text-sm text-slate-800 focus:border-hc-blue focus:bg-white focus:outline-none focus:ring-2 focus:ring-hc-blue/20">
                 </div>
             </div>
         </div>
 
-        <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
-            <span>Dica operacional: informe a <strong>Data de Retorno</strong> diretamente na linha da tabela para dar baixa imediata.</span>
+        <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-600">
+            <span>Dica operacional: informe a <strong class="text-hc-navy">Data de Retorno</strong> diretamente na linha da tabela para dar baixa imediata.</span>
             <div class="flex items-center gap-2">
                 <a href="{% url 'manutencoes:manutencao_list' %}"
                    hx-get="{% url 'manutencoes:manutencao_list' %}"
                    hx-target="#tabela-manutencoes-container"
                    hx-push-url="true"
-                   onclick="document.getElementById('form-filtros-manutencao').reset();"
-                   class="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-brand-600 transition">
+                   onclick="const f = document.getElementById('form-filtros-manutencao'); if (f) { f.reset(); f.querySelectorAll('select.js-searchable-select').forEach(s => s.tomselect && s.tomselect.clear(true)); }"
+                   class="inline-flex items-center gap-1 text-xs font-semibold text-hc-blue hover:text-hc-navy transition">
                     Limpar filtros
                 </a>
             </div>

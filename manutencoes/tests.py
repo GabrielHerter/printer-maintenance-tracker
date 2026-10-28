@@ -47,6 +47,14 @@ class ManutencoesOperationalModuleTests(TestCase):
         self.assertEqual(form.fields['data_abertura'].widget.input_type, 'date')
         self.assertEqual(form.fields['data_retorno'].widget.input_type, 'date')
 
+        for field_name in ('modelo', 'numero_serie', 'setor', 'defeito'):
+            attrs = form.fields[field_name].widget.attrs
+            self.assertIn('js-searchable-select', attrs.get('class', ''))
+            self.assertEqual(
+                attrs.get('placeholder'),
+                'Selecione ou digite para pesquisar...',
+            )
+
     def test_create_manutencao_via_htmx_triggers_event(self):
         url = reverse('manutencoes:manutencao_create')
         response = self.client.post(

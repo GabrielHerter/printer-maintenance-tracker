@@ -2,19 +2,19 @@
     {% if manutencoes %}
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-slate-200 text-left text-xs sm:text-sm">
-            <thead class="bg-slate-900 text-[11px] font-semibold uppercase tracking-wider text-slate-200">
+            <thead class="bg-hc-navy text-[11px] font-bold uppercase tracking-wider text-white border-b-2 border-hc-blue">
                 <tr>
-                    <th scope="col" class="px-3 py-3 w-14">ID</th>
-                    <th scope="col" class="px-3 py-3">Modelo</th>
-                    <th scope="col" class="px-3 py-3">Nº de Série</th>
-                    <th scope="col" class="px-3 py-3">Setor</th>
-                    <th scope="col" class="px-3 py-3">Defeito</th>
-                    <th scope="col" class="px-3 py-3 whitespace-nowrap">Abertura</th>
-                    <th scope="col" class="px-3 py-3 whitespace-nowrap">Retorno / Baixa Rápida</th>
-                    <th scope="col" class="px-3 py-3 text-center whitespace-nowrap">Situação</th>
-                    <th scope="col" class="px-3 py-3 text-center whitespace-nowrap">Tempo (Dias)</th>
-                    <th scope="col" class="px-3 py-3">Observação</th>
-                    <th scope="col" class="px-3 py-3 text-right whitespace-nowrap">Ações</th>
+                    <th scope="col" class="px-3 py-3.5 w-14 text-hc-yellow">ID</th>
+                    <th scope="col" class="px-3 py-3.5">Modelo</th>
+                    <th scope="col" class="px-3 py-3.5">Nº de Série</th>
+                    <th scope="col" class="px-3 py-3.5">Setor</th>
+                    <th scope="col" class="px-3 py-3.5">Defeito</th>
+                    <th scope="col" class="px-3 py-3.5 whitespace-nowrap">Abertura</th>
+                    <th scope="col" class="px-3 py-3.5 whitespace-nowrap">Retorno / Baixa Rápida</th>
+                    <th scope="col" class="px-3 py-3.5 text-center whitespace-nowrap">Situação</th>
+                    <th scope="col" class="px-3 py-3.5 text-center whitespace-nowrap">Tempo (Dias)</th>
+                    <th scope="col" class="px-3 py-3.5">Observação</th>
+                    <th scope="col" class="px-3 py-3.5 text-right whitespace-nowrap">Ações</th>
                 </tr>
             </thead>
             <tbody id="tabela-manutencoes-body" class="divide-y divide-slate-200 bg-white">
@@ -31,11 +31,11 @@
         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-slate-200 bg-slate-50/70 px-4 py-3">
         <div class="text-xs text-slate-600">
             Exibindo
-            <span class="font-semibold text-slate-900">{{ page_obj.start_index }}</span>
+            <span class="font-semibold text-hc-navy">{{ page_obj.start_index }}</span>
             a
-            <span class="font-semibold text-slate-900">{{ page_obj.end_index }}</span>
+            <span class="font-semibold text-hc-navy">{{ page_obj.end_index }}</span>
             de
-            <span class="font-semibold text-slate-900">{{ paginator.count }}</span>
+            <span class="font-semibold text-hc-navy">{{ paginator.count }}</span>
             registro{{ paginator.count|pluralize:"s" }}
             {% if page_obj.has_other_pages %}
             <span class="text-slate-400 mx-1">&bull;</span>
@@ -50,7 +50,7 @@
             <a href="?page={{ page_obj.previous_page_number }}{% if filter_querystring %}&amp;{{ filter_querystring }}{% endif %}"
                 hx-get="{% url 'manutencoes:manutencao_list' %}?page={{ page_obj.previous_page_number }}{% if filter_querystring %}&amp;{{ filter_querystring }}{% endif %}"
                 hx-target="#tabela-manutencoes-container" hx-swap="innerHTML" hx-push-url="true"
-                class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition">
+                class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-hc-navy transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -72,14 +72,14 @@
             <span class="px-2 py-1.5 text-xs font-medium text-slate-400">&hellip;</span>
             {% elif num == page_obj.number %}
             <span aria-current="page"
-                class="inline-flex items-center justify-center min-w-[30px] rounded-lg bg-brand-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-2xs">
+                class="inline-flex items-center justify-center min-w-[30px] rounded-lg bg-hc-blue px-2.5 py-1.5 text-xs font-bold text-white shadow-2xs border-b-2 border-hc-yellow">
                 {{ num }}
             </span>
             {% else %}
             <a href="?page={{ num }}{% if filter_querystring %}&amp;{{ filter_querystring }}{% endif %}"
                 hx-get="{% url 'manutencoes:manutencao_list' %}?page={{ num }}{% if filter_querystring %}&amp;{{ filter_querystring }}{% endif %}"
                 hx-target="#tabela-manutencoes-container" hx-swap="innerHTML" hx-push-url="true"
-                class="inline-flex items-center justify-center min-w-[30px] rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition">
+                class="inline-flex items-center justify-center min-w-[30px] rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-hc-navy transition">
                 {{ num }}
             </a>
             {% endif %}
@@ -90,7 +90,7 @@
             <a href="?page={{ page_obj.next_page_number }}{% if filter_querystring %}&amp;{{ filter_querystring }}{% endif %}"
                 hx-get="{% url 'manutencoes:manutencao_list' %}?page={{ page_obj.next_page_number }}{% if filter_querystring %}&amp;{{ filter_querystring }}{% endif %}"
                 hx-target="#tabela-manutencoes-container" hx-swap="innerHTML" hx-push-url="true"
-                class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition">
+                class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-hc-navy transition">
                 Próxima
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -111,13 +111,13 @@
     {% endif %}
     {% else %}
     <div class="p-12 text-center">
-        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-hc-bg text-hc-blue">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
         </div>
-        <h3 class="mt-3 text-sm font-semibold text-slate-900">Nenhum registro de manutenção encontrado</h3>
+        <h3 class="mt-3 text-sm font-semibold text-hc-navy">Nenhum registro de manutenção encontrado</h3>
         <p class="mt-1 text-xs text-slate-500">
             {% if filtros.filtros_ativos %}
             Nenhuma manutenção corresponde aos filtros selecionados.
@@ -130,10 +130,10 @@
 </div>
 
 {% if oob_stats %}
-<p id="stat-total" hx-swap-oob="true" class="text-2xl font-bold text-slate-900 mt-0.5">{{ stats.total }}</p>
+<p id="stat-total" hx-swap-oob="true" class="text-2xl font-bold text-hc-navy mt-0.5">{{ stats.total }}</p>
 <p id="stat-em-manutencao" hx-swap-oob="true" class="text-2xl font-bold text-amber-700 mt-0.5">{{ stats.em_manutencao }}
 </p>
 <p id="stat-resolvidos" hx-swap-oob="true" class="text-2xl font-bold text-emerald-700 mt-0.5">{{ stats.resolvidos }}</p>
-<p id="stat-tempo-medio" hx-swap-oob="true" class="text-2xl font-bold text-brand-700 mt-0.5">{{ stats.tempo_medio }}
+<p id="stat-tempo-medio" hx-swap-oob="true" class="text-2xl font-bold text-hc-blue mt-0.5">{{ stats.tempo_medio }}
     <span class="text-xs font-normal text-slate-500">dias</span></p>
 {% endif %}

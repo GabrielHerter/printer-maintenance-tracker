@@ -1,24 +1,33 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="pt-br" class="h-full bg-slate-50">
+<html lang="pt-br" class="h-full bg-hc-bg">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Gestão de Manutenção de Impressoras{% endblock %}</title>
+    <title>{% block title %}Gestão de Manutenção de Impressoras | HCPF - STI{% endblock %}</title>
 
-    <!-- Tailwind CSS (CDN) -->
+    <!-- Favicon Institucional HCPF -->
+    <link rel="icon" type="image/png" href="{% static 'img/hc_icone.png' %}">
+
+    <!-- Tailwind CSS (CDN) + Paleta Oficial HCPF -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
+                        'hc-navy': '#0D1B3E',
+                        'hc-blue': '#2B4694',
+                        'hc-blue-light': '#3B59B6',
+                        'hc-yellow': '#FFCB08',
+                        'hc-bg': '#F4F7FB',
                         brand: {
-                            50: '#eff6ff',
+                            50: '#F4F7FB',
                             100: '#dbeafe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            900: '#1e3a8a',
+                            500: '#3B59B6',
+                            600: '#2B4694',
+                            700: '#0D1B3E',
+                            900: '#0D1B3E',
                         }
                     }
                 }
@@ -32,96 +41,252 @@
     <!-- Chart.js (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 
+    <!-- Tom Select (CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.default.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+    <!-- Customização Visual do Tom Select (Identidade HCPF + Tailwind CSS) -->
+    <style>
+        .ts-wrapper.js-searchable-select,
+        .ts-wrapper {
+            width: 100%;
+            position: relative;
+        }
+
+        .ts-wrapper .ts-control {
+            border-radius: 0.5rem !important; /* rounded-lg */
+            border: 1px solid #cbd5e1 !important; /* border-slate-300 */
+            background-color: #ffffff !important;
+            padding: 0.625rem 2.25rem 0.625rem 0.875rem !important; /* py-2.5 px-3.5 */
+            min-height: 42px !important;
+            font-size: 0.875rem !important; /* text-sm */
+            line-height: 1.25rem !important;
+            color: #0f172a !important; /* text-slate-900 */
+            box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05) !important; /* shadow-sm */
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, background-color 0.15s ease-in-out !important;
+            display: flex !important;
+            align-items: center !important;
+            cursor: text !important;
+        }
+
+        /* Variante compacta para a barra de filtros da Planilha Operacional */
+        .ts-wrapper.filtro-select .ts-control {
+            background-color: #f8fafc !important; /* bg-slate-50 */
+            padding: 0.5rem 2rem 0.5rem 0.75rem !important; /* py-2 px-3 */
+            min-height: 38px !important;
+        }
+
+        .ts-wrapper.focus .ts-control,
+        .ts-wrapper.dropdown-active .ts-control {
+            background-color: #ffffff !important;
+            border-color: #2B4694 !important; /* hc-blue */
+            outline: none !important;
+            box-shadow: 0 0 0 2px rgba(43, 70, 148, 0.2) !important; /* ring-2 ring-hc-blue/20 */
+        }
+
+        .ts-wrapper .ts-control > input {
+            font-size: 0.875rem !important;
+            color: #0f172a !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .ts-wrapper .ts-control > input::placeholder {
+            color: #94a3b8 !important; /* text-slate-400 */
+        }
+
+        .ts-wrapper.single .ts-control::after {
+            border-color: #64748b transparent transparent transparent !important;
+            right: 0.875rem !important;
+        }
+
+        .ts-wrapper.single.dropdown-active .ts-control::after {
+            border-color: transparent transparent #2B4694 transparent !important;
+        }
+
+        .ts-dropdown {
+            z-index: 60 !important; /* Acima de z-50 do modal e rodapé */
+            margin-top: 0.25rem !important;
+            border-radius: 0.5rem !important; /* rounded-lg */
+            border: 1px solid #cbd5e1 !important; /* border-slate-300 */
+            background-color: #ffffff !important;
+            box-shadow: 0 10px 15px -3px rgba(13, 27, 62, 0.12), 0 4px 6px -4px rgba(13, 27, 62, 0.08) !important;
+            overflow: hidden !important;
+            font-size: 0.875rem !important;
+        }
+
+        .ts-dropdown .ts-dropdown-content {
+            max-height: 240px !important;
+            padding: 0.25rem !important;
+        }
+
+        .ts-dropdown .option {
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 0.375rem !important;
+            color: #1e293b !important; /* text-slate-800 */
+            cursor: pointer !important;
+            transition: background-color 0.1s ease, color 0.1s ease !important;
+        }
+
+        .ts-dropdown .option:hover,
+        .ts-dropdown .option.active {
+            background-color: #eff6ff !important; /* destaque suave hc-blue */
+            color: #0D1B3E !important; /* hc-navy */
+            font-weight: 600 !important;
+        }
+
+        .ts-dropdown .option.selected {
+            background-color: #2B4694 !important; /* hc-blue */
+            color: #ffffff !important;
+            font-weight: 600 !important;
+        }
+
+        .ts-dropdown .option[data-value=""] {
+            color: #64748b !important;
+            font-style: italic;
+        }
+    </style>
+
     {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-full flex flex-col text-slate-800 antialiased" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="min-h-full flex flex-col bg-hc-bg text-slate-800 antialiased" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
-    <!-- Barra de Navegação Responsiva -->
-    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo / Nome do Sistema -->
-                <div class="flex items-center gap-3">
-                    <div class="bg-brand-600 p-2 rounded-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <span class="font-bold text-lg tracking-tight">PrintTrack</span>
-                        <span class="hidden sm:inline-block text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded ml-1 border border-slate-700">
-                            Controle de Manutenção
-                        </span>
-                    </div>
+    <!-- Cabeçalho Institucional Duplo HCPF -->
+    <header class="sticky top-0 z-40">
+        <!-- 1. Topbar Institucional Fina -->
+        <div class="bg-hc-blue text-white text-xs py-1.5 px-6 border-b border-white/10">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1">
+                <div class="flex items-center gap-2 font-medium tracking-wide">
+                    <span class="h-2 w-2 rounded-full bg-hc-yellow shrink-0"></span>
+                    <span>Hospital de Clínicas de Passo Fundo &bull; Ecossistema de Saúde HC</span>
                 </div>
-
-                <!-- Links Desktop -->
-                <nav class="hidden md:flex items-center space-x-1">
-                    <a href="{% url 'manutencoes:manutencao_list' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if not entity_key and request.resolver_match.url_name != 'dashboard' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
-                        Manutenções
-                    </a>
-                    <a href="{% url 'manutencoes:dashboard' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'dashboard' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
-                        Dashboard
-                    </a>
-                    <a href="{% url 'cadastros:modelo_list' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'modelo' or request.resolver_match.url_name == 'modelo_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
-                        Modelos
-                    </a>
-                    <a href="{% url 'cadastros:numero_serie_list' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'numero_serie' or request.resolver_match.url_name == 'numero_serie_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
-                        Números de Série
-                    </a>
-                    <a href="{% url 'cadastros:setor_list' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'setor' or request.resolver_match.url_name == 'setor_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
-                        Setores
-                    </a>
-                    <a href="{% url 'cadastros:tipo_defeito_list' %}"
-                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'tipo_defeito' or request.resolver_match.url_name == 'tipo_defeito_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
-                        Tipos de Defeito
-                    </a>
-                </nav>
-
-                <!-- Botão Mobile Menu -->
-                <div class="md:hidden flex items-center">
-                    <button type="button"
-                            onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
-                            class="inline-flex items-center justify-center p-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500"
-                            aria-controls="mobile-menu"
-                            aria-expanded="false">
-                        <span class="sr-only">Abrir menu principal</span>
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
+                <div class="hidden sm:flex items-center">
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-hc-navy/50 border border-white/15 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                        <span class="h-1.5 w-1.5 rounded-full bg-hc-yellow"></span>
+                        Setor de Suporte TI (STI) &bull; Controle de Impressoras
+                    </span>
                 </div>
             </div>
         </div>
 
-        <!-- Menu Mobile -->
-        <div class="hidden md:hidden border-t border-slate-800 bg-slate-900" id="mobile-menu">
-            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="{% url 'manutencoes:manutencao_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if not entity_key and request.resolver_match.url_name != 'dashboard' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
-                    Manutenções
-                </a>
-                <a href="{% url 'manutencoes:dashboard' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'dashboard' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
-                    Dashboard
-                </a>
-                <a href="{% url 'cadastros:modelo_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'modelo' or request.resolver_match.url_name == 'modelo_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
-                    Modelos
-                </a>
-                <a href="{% url 'cadastros:numero_serie_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'numero_serie' or request.resolver_match.url_name == 'numero_serie_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
-                    Números de Série
-                </a>
-                <a href="{% url 'cadastros:setor_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'setor' or request.resolver_match.url_name == 'setor_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
-                    Setores
-                </a>
-                <a href="{% url 'cadastros:tipo_defeito_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'tipo_defeito' or request.resolver_match.url_name == 'tipo_defeito_list' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
-                    Tipos de Defeito
-                </a>
+        <!-- 2. Navbar Principal -->
+        <div class="bg-hc-navy text-white shadow-lg border-b border-hc-blue/40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <!-- Marca HCPF à Esquerda -->
+                    <a href="{% url 'manutencoes:manutencao_list' %}" class="flex items-center gap-3 group focus:outline-none">
+                        <img src="{% static 'img/hc_icone.png' %}"
+                             alt="Logo Hospital de Clínicas de Passo Fundo"
+                             class="h-11 w-11 rounded-lg border border-white/15 shadow-sm object-contain bg-hc-blue group-hover:border-hc-yellow/60 transition">
+                        <div class="flex flex-col">
+                            <div class="flex items-center gap-1.5 leading-none">
+                                <span class="font-extrabold text-lg tracking-wider text-hc-yellow">HCPF</span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest bg-hc-blue/80 text-white px-1.5 py-0.5 rounded border border-white/10">
+                                    STI
+                                </span>
+                            </div>
+                            <span class="text-xs text-slate-300 font-medium mt-1">
+                                Gestão de Impressoras &bull; Suporte TI
+                            </span>
+                        </div>
+                    </a>
+
+                    <!-- Links de Navegação Desktop -->
+                    <nav class="hidden md:flex items-center space-x-1" aria-label="Navegação Principal">
+                        <a href="{% url 'manutencoes:manutencao_list' %}"
+                           class="px-3.5 py-2 rounded-t-md text-sm flex items-center gap-2 transition {% if not entity_key and request.resolver_match.url_name != 'dashboard' %}font-bold text-white bg-hc-blue/50 border-b-2 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white border-b-2 border-transparent{% endif %}">
+                            {% if not entity_key and request.resolver_match.url_name != 'dashboard' %}
+                                <span class="h-1.5 w-1.5 rounded-full bg-hc-yellow"></span>
+                            {% endif %}
+                            <span>Manutenções</span>
+                        </a>
+
+                        <a href="{% url 'manutencoes:dashboard' %}"
+                           class="px-3.5 py-2 rounded-t-md text-sm flex items-center gap-2 transition {% if request.resolver_match.url_name == 'dashboard' %}font-bold text-white bg-hc-blue/50 border-b-2 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white border-b-2 border-transparent{% endif %}">
+                            {% if request.resolver_match.url_name == 'dashboard' %}
+                                <span class="h-1.5 w-1.5 rounded-full bg-hc-yellow"></span>
+                            {% endif %}
+                            <span>Dashboard</span>
+                        </a>
+
+                        <a href="{% url 'cadastros:modelo_list' %}"
+                           class="px-3.5 py-2 rounded-t-md text-sm flex items-center gap-2 transition {% if entity_key == 'modelo' or request.resolver_match.url_name == 'modelo_list' %}font-bold text-white bg-hc-blue/50 border-b-2 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white border-b-2 border-transparent{% endif %}">
+                            {% if entity_key == 'modelo' or request.resolver_match.url_name == 'modelo_list' %}
+                                <span class="h-1.5 w-1.5 rounded-full bg-hc-yellow"></span>
+                            {% endif %}
+                            <span>Modelos</span>
+                        </a>
+
+                        <a href="{% url 'cadastros:numero_serie_list' %}"
+                           class="px-3.5 py-2 rounded-t-md text-sm flex items-center gap-2 transition {% if entity_key == 'numero_serie' or request.resolver_match.url_name == 'numero_serie_list' %}font-bold text-white bg-hc-blue/50 border-b-2 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white border-b-2 border-transparent{% endif %}">
+                            {% if entity_key == 'numero_serie' or request.resolver_match.url_name == 'numero_serie_list' %}
+                                <span class="h-1.5 w-1.5 rounded-full bg-hc-yellow"></span>
+                            {% endif %}
+                            <span>Números de Série</span>
+                        </a>
+
+                        <a href="{% url 'cadastros:setor_list' %}"
+                           class="px-3.5 py-2 rounded-t-md text-sm flex items-center gap-2 transition {% if entity_key == 'setor' or request.resolver_match.url_name == 'setor_list' %}font-bold text-white bg-hc-blue/50 border-b-2 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white border-b-2 border-transparent{% endif %}">
+                            {% if entity_key == 'setor' or request.resolver_match.url_name == 'setor_list' %}
+                                <span class="h-1.5 w-1.5 rounded-full bg-hc-yellow"></span>
+                            {% endif %}
+                            <span>Setores</span>
+                        </a>
+
+                        <a href="{% url 'cadastros:tipo_defeito_list' %}"
+                           class="px-3.5 py-2 rounded-t-md text-sm flex items-center gap-2 transition {% if entity_key == 'tipo_defeito' or request.resolver_match.url_name == 'tipo_defeito_list' %}font-bold text-white bg-hc-blue/50 border-b-2 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white border-b-2 border-transparent{% endif %}">
+                            {% if entity_key == 'tipo_defeito' or request.resolver_match.url_name == 'tipo_defeito_list' %}
+                                <span class="h-1.5 w-1.5 rounded-full bg-hc-yellow"></span>
+                            {% endif %}
+                            <span>Tipos de Defeito</span>
+                        </a>
+                    </nav>
+
+                    <!-- Botão Mobile Menu -->
+                    <div class="md:hidden flex items-center">
+                        <button type="button"
+                                onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
+                                class="inline-flex items-center justify-center p-2 rounded-md text-slate-200 hover:text-white hover:bg-hc-blue/40 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-hc-yellow"
+                                aria-controls="mobile-menu"
+                                aria-expanded="false">
+                            <span class="sr-only">Abrir menu principal</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Mobile -->
+            <div class="hidden md:hidden border-t border-hc-blue/40 bg-hc-navy" id="mobile-menu">
+                <div class="px-3 pt-2 pb-3 space-y-1">
+                    <a href="{% url 'manutencoes:manutencao_list' %}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-md text-sm {% if not entity_key and request.resolver_match.url_name != 'dashboard' %}font-bold text-white bg-hc-blue/50 border-l-4 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white{% endif %}">
+                        <span>Manutenções</span>
+                    </a>
+                    <a href="{% url 'manutencoes:dashboard' %}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-md text-sm {% if request.resolver_match.url_name == 'dashboard' %}font-bold text-white bg-hc-blue/50 border-l-4 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white{% endif %}">
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{% url 'cadastros:modelo_list' %}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-md text-sm {% if entity_key == 'modelo' or request.resolver_match.url_name == 'modelo_list' %}font-bold text-white bg-hc-blue/50 border-l-4 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white{% endif %}">
+                        <span>Modelos</span>
+                    </a>
+                    <a href="{% url 'cadastros:numero_serie_list' %}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-md text-sm {% if entity_key == 'numero_serie' or request.resolver_match.url_name == 'numero_serie_list' %}font-bold text-white bg-hc-blue/50 border-l-4 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white{% endif %}">
+                        <span>Números de Série</span>
+                    </a>
+                    <a href="{% url 'cadastros:setor_list' %}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-md text-sm {% if entity_key == 'setor' or request.resolver_match.url_name == 'setor_list' %}font-bold text-white bg-hc-blue/50 border-l-4 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white{% endif %}">
+                        <span>Setores</span>
+                    </a>
+                    <a href="{% url 'cadastros:tipo_defeito_list' %}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-md text-sm {% if entity_key == 'tipo_defeito' or request.resolver_match.url_name == 'tipo_defeito_list' %}font-bold text-white bg-hc-blue/50 border-l-4 border-hc-yellow{% else %}font-medium text-slate-200 hover:bg-hc-blue/30 hover:text-white{% endif %}">
+                        <span>Tipos de Defeito</span>
+                    </a>
+                </div>
             </div>
         </div>
     </header>
@@ -133,7 +298,7 @@
         <div class="p-4 rounded-lg border flex items-center justify-between shadow-sm
             {% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-800
             {% elif message.tags == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-800
-            {% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %}">
+            {% else %}bg-blue-50 border-blue-200 text-hc-navy{% endif %}">
             <span class="text-sm font-medium">{{ message }}</span>
             <button type="button" onclick="this.parentElement.remove()" class="text-current opacity-60 hover:opacity-100">
                 &times;
@@ -151,11 +316,14 @@
     <!-- Container Global para Modais HTMX -->
     <div id="modal-container"></div>
 
-    <!-- Rodapé -->
+    <!-- Rodapé Institucional HCPF -->
     <footer class="bg-white border-t border-slate-200 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-            <span>Sistema de Controle de Manutenção de Impressoras</span>
-            <span>Django 5 &bull; HTMX &bull; Tailwind CSS &bull; PostgreSQL</span>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-600">
+            <div class="flex items-center gap-2 font-semibold text-hc-navy">
+                <span class="h-2 w-2 rounded-full bg-hc-yellow ring-2 ring-hc-blue"></span>
+                <span>Hospital de Clínicas de Passo Fundo — Suporte TI (STI)</span>
+            </div>
+            <span class="text-slate-500">Sistema Interno de Controle de Manutenção de Impressoras</span>
         </div>
     </footer>
 
@@ -179,6 +347,95 @@
             }
         });
 
+        // Inicialização e sincronização de Selects Pesquisáveis (Tom Select + HTMX)
+        function initSearchableSelects(container = document) {
+            if (typeof TomSelect === 'undefined') return;
+
+            const root = (container && container.querySelectorAll) ? container : document;
+            const selects = [];
+
+            if (root instanceof HTMLSelectElement && root.classList.contains('js-searchable-select')) {
+                selects.push(root);
+            } else {
+                root.querySelectorAll('select.js-searchable-select').forEach(function (el) {
+                    selects.push(el);
+                });
+            }
+
+            selects.forEach(function (el) {
+                // Caso o <select> já tenha instância ativa (ex: <option> atualizado via HTMX), sincroniza sem duplicar
+                if (el.tomselect) {
+                    el.tomselect.sync();
+                    el.tomselect.refreshOptions(false);
+                    return;
+                }
+
+                // Remove eventual wrapper órfão caso o elemento <select> tenha sido recriado por swap HTMX
+                if (el.nextElementSibling && el.nextElementSibling.classList.contains('ts-wrapper')) {
+                    el.nextElementSibling.remove();
+                }
+
+                const emptyOpt = el.querySelector('option[value=""]');
+                const placeholderText =
+                    el.getAttribute('placeholder') ||
+                    el.getAttribute('data-placeholder') ||
+                    (emptyOpt ? emptyOpt.textContent.trim() : 'Selecione ou digite para pesquisar...');
+
+                const hasInitialValue = Boolean(el.value && String(el.value).trim() !== '');
+
+                const ts = new TomSelect(el, {
+                    create: false,
+                    allowEmptyOption: true,
+                    openOnFocus: true,
+                    placeholder: placeholderText,
+                    maxOptions: 500,
+                    sortField: [
+                        { field: '$order' },
+                        { field: 'text', direction: 'asc' }
+                    ],
+                    render: {
+                        no_results: function (data, escape) {
+                            return '<div class="no-results p-2 text-sm text-slate-500">Nenhum resultado encontrado para "' + escape(data.input) + '"</div>';
+                        }
+                    },
+                    onInitialize: function () {
+                        // Se estiver na opção vazia inicial, limpa a seleção visual para exibir o placeholder
+                        // e permitir digitação imediata no campo sem precisar apagar texto
+                        if (!hasInitialValue) {
+                            this.clear(true);
+                        }
+                    },
+                    onChange: function (value) {
+                        // Se o usuário selecionar a opção vazia ("Todos..." ou limpar), exibe o placeholder novamente
+                        if (!value) {
+                            this.clear(true);
+                        }
+                    }
+                });
+
+                // Permite digitar diretamente para filtrar mesmo quando um item já está selecionado
+                ts.control.addEventListener('keydown', function (e) {
+                    if (ts.items.length > 0 && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                        ts.clear(true);
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initSearchableSelects(document);
+        });
+
+        document.body.addEventListener('htmx:afterSwap', function (event) {
+            const target = (event.detail && event.detail.target) ? event.detail.target : document;
+            initSearchableSelects(target);
+        });
+
+        document.body.addEventListener('htmx:load', function (event) {
+            const elt = (event.detail && event.detail.elt) ? event.detail.elt : document;
+            initSearchableSelects(elt);
+        });
+
         // Se houver um <select> correspondente na tela (ex: formulário de manutenção)
         // sem hx-get próprio, insere/seleciona automaticamente a nova opção criada via modal
         document.body.addEventListener('cadastroUpdated', function (event) {
@@ -186,15 +443,24 @@
             if (!detail.select_id || !detail.id) return;
             const selectEl = document.getElementById(detail.select_id);
             if (selectEl && !selectEl.hasAttribute('hx-get')) {
-                let option = selectEl.querySelector('option[value="' + detail.id + '"]');
+                const valueStr = String(detail.id);
+                let option = selectEl.querySelector('option[value="' + valueStr + '"]');
                 if (!option) {
-                    option = new Option(detail.label, detail.id, true, true);
+                    option = new Option(detail.label, valueStr, true, true);
                     selectEl.add(option);
                 } else {
                     option.textContent = detail.label;
                     option.selected = true;
                 }
-                selectEl.value = String(detail.id);
+                selectEl.value = valueStr;
+
+                // Sincroniza a instância do Tom Select caso ativa no campo
+                if (selectEl.tomselect) {
+                    selectEl.tomselect.addOption({ value: valueStr, text: detail.label });
+                    selectEl.tomselect.refreshOptions(false);
+                    selectEl.tomselect.setValue(valueStr, true);
+                }
+
                 selectEl.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });

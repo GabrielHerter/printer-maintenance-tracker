@@ -6,48 +6,78 @@ from cadastros.models import ModeloImpressora, NumeroSerie, Setor, TipoDefeito
 from .models import Manutencao
 
 TAILWIND_SELECT_CLASS = (
-    'w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm '
+    'js-searchable-select w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm '
     'text-slate-900 shadow-sm transition '
-    'focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/20'
+    'focus:border-hc-blue focus:outline-none focus:ring-2 focus:ring-hc-blue/20'
 )
 
 TAILWIND_DATE_INPUT_CLASS = (
     'w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm '
     'text-slate-900 shadow-sm transition '
-    'focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/20'
+    'focus:border-hc-blue focus:outline-none focus:ring-2 focus:ring-hc-blue/20'
 )
 
 TAILWIND_TEXTAREA_CLASS = (
     'w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm '
     'text-slate-900 placeholder-slate-400 shadow-sm transition '
-    'focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/20'
+    'focus:border-hc-blue focus:outline-none focus:ring-2 focus:ring-hc-blue/20'
 )
+
+SEARCHABLE_SELECT_PLACEHOLDER = 'Selecione ou digite para pesquisar...'
 
 
 class ManutencaoForm(forms.ModelForm):
     modelo = forms.ModelChoiceField(
         queryset=ModeloImpressora.objects.filter(ativo=True).order_by('nome'),
         label='Modelo de Impressora',
-        empty_label='Selecione o modelo...',
-        widget=forms.Select(attrs={'class': TAILWIND_SELECT_CLASS}),
+        empty_label=SEARCHABLE_SELECT_PLACEHOLDER,
+        widget=forms.Select(
+            attrs={
+                'class': TAILWIND_SELECT_CLASS,
+                'placeholder': SEARCHABLE_SELECT_PLACEHOLDER,
+                'data-placeholder': SEARCHABLE_SELECT_PLACEHOLDER,
+                'autocomplete': 'off',
+            }
+        ),
     )
     numero_serie = forms.ModelChoiceField(
         queryset=NumeroSerie.objects.filter(ativo=True).order_by('serial'),
         label='Número de Série',
-        empty_label='Selecione o número de série...',
-        widget=forms.Select(attrs={'class': TAILWIND_SELECT_CLASS}),
+        empty_label=SEARCHABLE_SELECT_PLACEHOLDER,
+        widget=forms.Select(
+            attrs={
+                'class': TAILWIND_SELECT_CLASS,
+                'placeholder': SEARCHABLE_SELECT_PLACEHOLDER,
+                'data-placeholder': SEARCHABLE_SELECT_PLACEHOLDER,
+                'autocomplete': 'off',
+            }
+        ),
     )
     setor = forms.ModelChoiceField(
         queryset=Setor.objects.filter(ativo=True).order_by('nome'),
         label='Setor',
-        empty_label='Selecione o setor...',
-        widget=forms.Select(attrs={'class': TAILWIND_SELECT_CLASS}),
+        empty_label=SEARCHABLE_SELECT_PLACEHOLDER,
+        widget=forms.Select(
+            attrs={
+                'class': TAILWIND_SELECT_CLASS,
+                'placeholder': SEARCHABLE_SELECT_PLACEHOLDER,
+                'data-placeholder': SEARCHABLE_SELECT_PLACEHOLDER,
+                'autocomplete': 'off',
+            }
+        ),
     )
     defeito = forms.ModelChoiceField(
         queryset=TipoDefeito.objects.filter(ativo=True).order_by('descricao'),
         label='Tipo de Defeito',
-        empty_label='Selecione o defeito...',
-        widget=forms.Select(attrs={'class': TAILWIND_SELECT_CLASS}),
+        empty_label=SEARCHABLE_SELECT_PLACEHOLDER,
+        widget=forms.Select(
+            attrs={
+                'class': TAILWIND_SELECT_CLASS,
+                'placeholder': SEARCHABLE_SELECT_PLACEHOLDER,
+                'data-placeholder': SEARCHABLE_SELECT_PLACEHOLDER,
+                'autocomplete': 'off',
+            }
+        ),
     )
 
     class Meta:

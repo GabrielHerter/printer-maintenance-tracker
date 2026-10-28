@@ -1,5 +1,5 @@
 <div id="modal-backdrop"
-     class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-hc-navy/60 backdrop-blur-xs p-4 overflow-y-auto"
      role="dialog"
      aria-modal="true"
      aria-labelledby="modal-title">
@@ -8,19 +8,22 @@
          class="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden"
          onclick="event.stopPropagation()">
 
-        <!-- Cabeçalho do Modal -->
-        <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
-            <div>
-                <h2 id="modal-title" class="text-base font-bold text-slate-900">
-                    Novo {{ config.title_singular }}
-                </h2>
-                <p class="text-xs text-slate-500 mt-0.5">
-                    O texto será padronizado automaticamente em MAIÚSCULAS.
-                </p>
+        <!-- Cabeçalho Institucional do Modal -->
+        <div class="flex items-center justify-between border-b border-hc-blue/30 bg-hc-navy px-6 py-4 text-white">
+            <div class="flex items-center gap-3">
+                <span class="h-3 w-1.5 rounded-full bg-hc-yellow"></span>
+                <div>
+                    <h2 id="modal-title" class="text-base font-bold text-white">
+                        Novo {{ config.title_singular }}
+                    </h2>
+                    <p class="text-xs text-slate-300 mt-0.5">
+                        O texto será padronizado automaticamente em MAIÚSCULAS.
+                    </p>
+                </div>
             </div>
             <button type="button"
                     onclick="document.getElementById('modal-container').innerHTML = ''"
-                    class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200/60 hover:text-slate-600 transition cursor-pointer"
+                    class="rounded-lg p-1.5 text-slate-300 hover:bg-hc-blue/50 hover:text-white transition cursor-pointer"
                     aria-label="Fechar modal">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -46,9 +49,9 @@
 
             {% for field in form %}
                 {% if field.name == 'ativo' %}
-                <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-hc-bg px-4 py-3">
                     <div>
-                        <label for="{{ field.id_for_label }}" class="text-sm font-medium text-slate-800 cursor-pointer">
+                        <label for="{{ field.id_for_label }}" class="text-sm font-semibold text-hc-navy cursor-pointer">
                             {{ field.label }}
                         </label>
                         <p class="text-xs text-slate-500">Disponível para seleção em novas manutenções</p>
@@ -57,7 +60,7 @@
                 </div>
                 {% else %}
                 <div>
-                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-bold text-hc-navy mb-1.5">
                         {{ field.label }} <span class="text-red-500">*</span>
                     </label>
                     {{ field }}
@@ -86,9 +89,9 @@
                     Cancelar
                 </button>
                 <button type="submit"
-                        class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-xs hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition cursor-pointer">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        class="inline-flex items-center gap-2 rounded-lg bg-hc-blue hover:bg-hc-blue-light px-4 py-2 text-sm font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-hc-blue focus:ring-offset-2 transition cursor-pointer">
+                    <svg class="h-4 w-4 text-hc-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                     </svg>
                     Salvar {{ config.title_singular }}
                 </button>
@@ -96,4 +99,3 @@
         </form>
     </div>
 </div>
-
