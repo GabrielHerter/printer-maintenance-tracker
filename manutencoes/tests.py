@@ -71,11 +71,30 @@ class ManutencoesOperationalModuleTests(TestCase):
             HTTP_HX_REQUEST='true',
         )
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'')
         self.assertEqual(response['HX-Trigger'], 'manutencaoAtualizada')
 
         manutencao = Manutencao.objects.get()
         self.assertEqual(manutencao.situacao, SituacaoManutencao.MANUTENCAO)
         self.assertIsNone(manutencao.tempo_manutencao_dias)
+
+    def test_reactive_table_container_present_when_empty_and_partial_without_navbar_on_htmx(self):
+        list_url = reverse('manutencoes:lista')
+
+        # 1. Lista vazia em requisição normal: container reativo presente com hx-trigger no body
+        resp_empty = self.client.get(list_url)
+        self.assertEqual(resp_empty.status_code, 200)
+        self.assertContains(resp_empty, 'id="tabela-manutencoes-container"')
+        self.assertContains(resp_empty, 'hx-trigger="manutencaoAtualizada from:body"')
+        self.assertContains(resp_empty, 'hx-include="#form-filtros"')
+        self.assertContains(resp_empty, 'Nenhum registro de manutenção encontrado')
+
+        # 2. Requisição HTMX retorna apenas o fragmento parcial da tabela (sem navbar duplicada)
+        resp_htmx = self.client.get(list_url, HTTP_HX_REQUEST='true')
+        self.assertEqual(resp_htmx.status_code, 200)
+        self.assertNotContains(resp_htmx, '<header')
+        self.assertNotContains(resp_htmx, 'Navegação Principal')
+        self.assertContains(resp_htmx, 'Nenhum registro de manutenção encontrado')
 
     def test_dar_baixa_manutencao_recalculates_status_days_and_triggers_event(self):
         manutencao = Manutencao.objects.create(

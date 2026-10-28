@@ -341,21 +341,10 @@ def manutencao_create(request: HttpRequest) -> HttpResponse:
     if request.method == 'POST':
         form = ManutencaoForm(request.POST)
         if form.is_valid():
-            manutencao = form.save()
-            manutencao = _get_base_queryset().get(pk=manutencao.pk)
+            form.save()
 
             if _is_htmx(request):
-                context = _build_list_context(request)
-                context['manutencao_criada'] = manutencao
-                context['oob_update_table'] = True
-                context['oob_stats'] = False
-                response = render(
-                    request,
-                    'manutencoes/partials/oob_mutacao_response.html',
-                    context,
-                )
-                response['HX-Retarget'] = '#modal-container'
-                response['HX-Reswap'] = 'innerHTML'
+                response = HttpResponse('')
                 response['HX-Trigger'] = 'manutencaoAtualizada'
                 return response
 
@@ -386,25 +375,10 @@ def manutencao_update(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method == 'POST':
         form = ManutencaoForm(request.POST, instance=manutencao)
         if form.is_valid():
-            manutencao = form.save()
-            manutencao = _get_base_queryset().get(pk=manutencao.pk)
+            form.save()
 
             if _is_htmx(request):
-                stats = _get_stats()
-                context = {
-                    'manutencao': manutencao,
-                    'stats': stats,
-                    'hoje_iso': timezone.localdate().strftime('%Y-%m-%d'),
-                    'oob_row': True,
-                    'oob_stats': False,
-                }
-                response = render(
-                    request,
-                    'manutencoes/partials/oob_mutacao_response.html',
-                    context,
-                )
-                response['HX-Retarget'] = '#modal-container'
-                response['HX-Reswap'] = 'innerHTML'
+                response = HttpResponse('')
                 response['HX-Trigger'] = 'manutencaoAtualizada'
                 return response
 
@@ -498,16 +472,7 @@ def manutencao_delete(request: HttpRequest, pk: int) -> HttpResponse:
     manutencao.delete()
 
     if _is_htmx(request):
-        stats = _get_stats()
-        context = {
-            'stats': stats,
-            'oob_stats': False,
-        }
-        response = render(
-            request,
-            'manutencoes/partials/oob_mutacao_response.html',
-            context,
-        )
+        response = HttpResponse('')
         response['HX-Trigger'] = 'manutencaoAtualizada'
         return response
 

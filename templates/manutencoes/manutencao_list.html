@@ -66,11 +66,13 @@
     </div>
 
     <!-- Barra de Filtros Operacionais (GET + HTMX) -->
-    <form id="form-filtros-manutencao"
+    <form id="form-filtros"
+          name="form-filtros-manutencao"
           method="get"
-          action="{% url 'manutencoes:manutencao_list' %}"
-          hx-get="{% url 'manutencoes:manutencao_list' %}"
+          action="{% url 'manutencoes:lista' %}"
+          hx-get="{% url 'manutencoes:lista' %}"
           hx-target="#tabela-manutencoes-container"
+          hx-swap="innerHTML"
           hx-push-url="true"
           hx-trigger="keyup changed delay:300ms from:#filtro-serial, change from:.filtro-select, change from:.filtro-data"
           class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
@@ -175,11 +177,12 @@
         <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-600">
             <span>Dica operacional: informe a <strong class="text-hc-navy">Data de Retorno</strong> diretamente na linha da tabela para dar baixa imediata.</span>
             <div class="flex items-center gap-2">
-                <a href="{% url 'manutencoes:manutencao_list' %}"
-                   hx-get="{% url 'manutencoes:manutencao_list' %}"
+                <a href="{% url 'manutencoes:lista' %}"
+                   hx-get="{% url 'manutencoes:lista' %}"
                    hx-target="#tabela-manutencoes-container"
+                   hx-swap="innerHTML"
                    hx-push-url="true"
-                   onclick="const f = document.getElementById('form-filtros-manutencao'); if (f) { f.reset(); f.querySelectorAll('select.js-searchable-select').forEach(s => s.tomselect && s.tomselect.clear(true)); }"
+                   onclick="const f = document.getElementById('form-filtros'); if (f) { f.reset(); f.querySelectorAll('select.js-searchable-select').forEach(s => s.tomselect && s.tomselect.clear(true)); }"
                    class="inline-flex items-center gap-1 text-xs font-semibold text-hc-blue hover:text-hc-navy transition">
                     Limpar filtros
                 </a>
@@ -187,8 +190,13 @@
         </div>
     </form>
 
-    <!-- Container da Tabela Estilo Planilha -->
-    <div id="tabela-manutencoes-container">
+    <!-- Container da Tabela Estilo Planilha (Sempre presente na página e escutando 'manutencaoAtualizada from:body') -->
+    <div id="tabela-manutencoes-container"
+         hx-get="{% url 'manutencoes:lista' %}"
+         hx-trigger="manutencaoAtualizada from:body"
+         hx-target="#tabela-manutencoes-container"
+         hx-swap="innerHTML"
+         hx-include="#form-filtros">
         {% include "manutencoes/partials/tabela_manutencoes.html" %}
     </div>
 
@@ -198,8 +206,12 @@
 {% block extra_scripts %}
 <script>
     (function () {
+        function getFilterForm() {
+            return document.getElementById('form-filtros') || document.getElementById('form-filtros-manutencao');
+        }
+
         function buildFilterQueryString() {
-            const filterForm = document.getElementById('form-filtros-manutencao');
+            const filterForm = getFilterForm();
             if (!filterForm) return '';
             const params = new URLSearchParams(new FormData(filterForm));
             for (const [key, val] of Array.from(params.entries())) {
@@ -217,6 +229,20 @@
             linkEl.href = baseUrl + buildFilterQueryString();
             return true;
         };
+
+        // Fechamento automático e limpeza do modal ao receber o evento 'manutencaoAtualizada'
+        function closeAndCleanManutencaoModal() {
+            const modalContainer = document.getElementById('modal-container');
+            if (!modalContainer) return;
+            modalContainer.querySelectorAll('select.js-searchable-select').forEach(function (el) {
+                if (el.tomselect) {
+                    el.tomselect.destroy();
+                }
+            });
+            modalContainer.innerHTML = '';
+        }
+
+        document.body.addEventListener('manutencaoAtualizada', closeAndCleanManutencaoModal);
     })();
 </script>
 {% endblock %}

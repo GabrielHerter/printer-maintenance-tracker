@@ -332,6 +332,11 @@
         function clearModalContainer() {
             const container = document.getElementById('modal-container');
             if (container) {
+                container.querySelectorAll('select.js-searchable-select').forEach(function (el) {
+                    if (el.tomselect) {
+                        el.tomselect.destroy();
+                    }
+                });
                 container.innerHTML = '';
             }
         }

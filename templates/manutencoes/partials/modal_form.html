@@ -33,8 +33,8 @@
 
         <!-- Formulário HTMX -->
         <form hx-post="{{ action_url }}"
-              hx-target="#modal-backdrop"
-              hx-swap="outerHTML"
+              hx-target="#modal-container"
+              hx-swap="innerHTML"
               class="p-6 space-y-5"
               novalidate>
             {% csrf_token %}
