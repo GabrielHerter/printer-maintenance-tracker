@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %} Gestão de Manutenção de Impressoras{% endblock %}</title>
+    <title>{% block title %}Gestão de Manutenção de Impressoras{% endblock %}</title>
 
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -59,23 +59,23 @@
                 <!-- Links Desktop -->
                 <nav class="hidden md:flex items-center space-x-1">
                     <a href="#"
-                       class="px-3 py-2 rounded-md text-sm font-medium text-white bg-slate-800 hover:bg-slate-700 transition">
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if not entity_key %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         Painel &amp; Manutenções
                     </a>
-                    <a href="#"
-                       class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                    <a href="{% url 'cadastros:modelo_list' %}"
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'modelo' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         Modelos
                     </a>
-                    <a href="#"
-                       class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                    <a href="{% url 'cadastros:numero_serie_list' %}"
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'numero_serie' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         Números de Série
                     </a>
-                    <a href="#"
-                       class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                    <a href="{% url 'cadastros:setor_list' %}"
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'setor' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         Setores
                     </a>
-                    <a href="#"
-                       class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition">
+                    <a href="{% url 'cadastros:tipo_defeito_list' %}"
+                       class="px-3 py-2 rounded-md text-sm font-medium {% if entity_key == 'tipo_defeito' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         Tipos de Defeito
                     </a>
                 </nav>
@@ -100,19 +100,19 @@
         <!-- Menu Mobile -->
         <div class="hidden md:hidden border-t border-slate-800 bg-slate-900" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-slate-800">
+                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium {% if not entity_key %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     Painel &amp; Manutenções
                 </a>
-                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white">
+                <a href="{% url 'cadastros:modelo_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'modelo' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     Modelos
                 </a>
-                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white">
+                <a href="{% url 'cadastros:numero_serie_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'numero_serie' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     Números de Série
                 </a>
-                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white">
+                <a href="{% url 'cadastros:setor_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'setor' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     Setores
                 </a>
-                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800 hover:text-white">
+                <a href="{% url 'cadastros:tipo_defeito_list' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if entity_key == 'tipo_defeito' %}text-white bg-slate-800{% else %}text-slate-300 hover:bg-slate-800 hover:text-white{% endif %}">
                     Tipos de Defeito
                 </a>
             </div>
@@ -152,7 +152,45 @@
         </div>
     </footer>
 
+    <script>
+        // Fecha o modal ao receber evento HX-Trigger "closeModal" ou pressionar ESC
+        document.body.addEventListener('closeModal', function () {
+            const container = document.getElementById('modal-container');
+            if (container) {
+                container.innerHTML = '';
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                const container = document.getElementById('modal-container');
+                if (container && container.innerHTML.trim() !== '') {
+                    container.innerHTML = '';
+                }
+            }
+        });
+
+        // Se houver um <select> correspondente na tela (ex: formulário de manutenção)
+        // sem hx-get próprio, insere/seleciona automaticamente a nova opção criada via modal
+        document.body.addEventListener('cadastroUpdated', function (event) {
+            const detail = event.detail || {};
+            if (!detail.select_id || !detail.id) return;
+            const selectEl = document.getElementById(detail.select_id);
+            if (selectEl && !selectEl.hasAttribute('hx-get')) {
+                let option = selectEl.querySelector('option[value="' + detail.id + '"]');
+                if (!option) {
+                    option = new Option(detail.label, detail.id, true, true);
+                    selectEl.add(option);
+                } else {
+                    option.textContent = detail.label;
+                    option.selected = true;
+                }
+                selectEl.value = String(detail.id);
+                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    </script>
+
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>
-

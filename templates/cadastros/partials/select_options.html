@@ -1,0 +1,5 @@
+<option value="">{{ empty_label|default:"Selecione..." }}</option>
+{% for item in items %}
+<option value="{{ item.pk }}" {% if item.pk == selected_pk %}selected{% endif %}>{{ item.valor_principal }}</option>
+{% endfor %}
+
