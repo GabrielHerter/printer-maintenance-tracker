@@ -1,8 +1,14 @@
+import csv
 from datetime import date
+import io
+from xml.sax.saxutils import escape as xml_escape
+import zipfile
+
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Avg, Count, Q, QuerySet
-from django.http import HttpRequest, HttpResponse, QueryDict
+from django.db.models.functions import Coalesce
+from django.http import HttpRequest, HttpResponse, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -122,18 +128,118 @@ def _get_stats(queryset: QuerySet[Manutencao] | None = None) -> dict:
         total=Count('id'),
         em_manutencao=Count('id', filter=Q(situacao=SituacaoManutencao.MANUTENCAO)),
         resolvidos=Count('id', filter=Q(situacao=SituacaoManutencao.RESOLVIDO)),
-        tempo_medio=Avg(
-            'tempo_manutencao_dias',
-            filter=Q(situacao=SituacaoManutencao.RESOLVIDO),
-        ),
+        tempo_medio=Avg('tempo_manutencao_dias'),
     )
     tempo_medio_val = agg['tempo_medio']
+    mttr = round(float(tempo_medio_val), 1) if tempo_medio_val is not None else 0.0
     return {
         'total': agg['total'] or 0,
         'em_manutencao': agg['em_manutencao'] or 0,
         'resolvidos': agg['resolvidos'] or 0,
-        'tempo_medio': round(float(tempo_medio_val), 1) if tempo_medio_val is not None else 0,
+        'tempo_medio': mttr,
+        'mttr': mttr,
     }
+
+
+@require_GET
+def dashboard_kpis_partial(request: HttpRequest) -> HttpResponse:
+    """
+    Fragmento HTMX que escuta 'manutencaoAtualizada from:body' e renderiza
+    os 4 cards de indicadores (KPIs) calculados diretamente via Django ORM aggregate().
+    """
+    base_qs = Manutencao.objects.all()
+    filtered_qs, _ = _apply_filters(base_qs, request.GET)
+    stats = _get_stats(filtered_qs)
+    context = {
+        'stats': stats,
+        'total_manutencoes': stats['total'],
+        'em_manutencao': stats['em_manutencao'],
+        'resolvidas': stats['resolvidos'],
+        'mttr_dias': stats['tempo_medio'],
+    }
+    return render(request, 'manutencoes/partials/dashboard_kpis.html', context)
+
+
+@require_GET
+def dashboard_charts_api(request: HttpRequest) -> JsonResponse:
+    """
+    Endpoint JSON analítico para o Chart.js.
+    Todas as agregações (Count, Avg) são executadas diretamente no PostgreSQL
+    via Django ORM (aggregate, values, annotate, values_list), sem loops em Python.
+    """
+    base_qs = Manutencao.objects.all()
+    qs, _ = _apply_filters(base_qs, request.GET)
+
+    # 1. KPIs consolidados e Distribuição por Situação (Manutenção vs Resolvido)
+    kpis_agg = qs.aggregate(
+        total=Count('id'),
+        em_manutencao=Count('id', filter=Q(situacao=SituacaoManutencao.MANUTENCAO)),
+        resolvidos=Count('id', filter=Q(situacao=SituacaoManutencao.RESOLVIDO)),
+        mttr_dias=Avg('tempo_manutencao_dias'),
+    )
+    mttr_val = kpis_agg['mttr_dias']
+    mttr_rounded = round(float(mttr_val), 1) if mttr_val is not None else 0.0
+
+    situacao_qs = (
+        qs.values('situacao')
+        .annotate(total=Count('id'), mttr_dias=Avg('tempo_manutencao_dias'))
+        .order_by('situacao')
+    )
+
+    # 2. Top 5 Modelos de Impressora com mais manutenções (modelo__nome)
+    top_modelos_qs = (
+        qs.values('modelo__nome')
+        .annotate(total=Count('id'), mttr_dias=Avg('tempo_manutencao_dias'))
+        .order_by('-total', 'modelo__nome')[:5]
+    )
+
+    # 3. Top 5 Setores com maior volume de chamados (setor__nome)
+    top_setores_qs = (
+        qs.values('setor__nome')
+        .annotate(total=Count('id'), mttr_dias=Avg('tempo_manutencao_dias'))
+        .order_by('-total', 'setor__nome')[:5]
+    )
+
+    # 4. Top 5 Tipos de Defeito mais recorrentes (defeito__descricao)
+    top_defeitos_qs = (
+        qs.values('defeito__descricao')
+        .annotate(total=Count('id'), mttr_dias=Avg('tempo_manutencao_dias'))
+        .order_by('-total', 'defeito__descricao')[:5]
+    )
+
+    payload = {
+        'kpis': {
+            'total': kpis_agg['total'] or 0,
+            'em_manutencao': kpis_agg['em_manutencao'] or 0,
+            'resolvidos': kpis_agg['resolvidos'] or 0,
+            'mttr_dias': mttr_rounded,
+        },
+        'situacao': {
+            'labels': ['Em Manutenção', 'Resolvido'],
+            'keys': [SituacaoManutencao.MANUTENCAO, SituacaoManutencao.RESOLVIDO],
+            'data': [
+                kpis_agg['em_manutencao'] or 0,
+                kpis_agg['resolvidos'] or 0,
+            ],
+            'items': list(situacao_qs),
+        },
+        'top_modelos': {
+            'labels': list(top_modelos_qs.values_list('modelo__nome', flat=True)),
+            'data': list(top_modelos_qs.values_list('total', flat=True)),
+            'items': list(top_modelos_qs),
+        },
+        'top_setores': {
+            'labels': list(top_setores_qs.values_list('setor__nome', flat=True)),
+            'data': list(top_setores_qs.values_list('total', flat=True)),
+            'items': list(top_setores_qs),
+        },
+        'top_defeitos': {
+            'labels': list(top_defeitos_qs.values_list('defeito__descricao', flat=True)),
+            'data': list(top_defeitos_qs.values_list('total', flat=True)),
+            'items': list(top_defeitos_qs),
+        },
+    }
+    return JsonResponse(payload)
 
 
 def _build_list_context(request: HttpRequest) -> dict:
@@ -170,6 +276,10 @@ def _build_list_context(request: HttpRequest) -> dict:
         'filter_querystring': filter_querystring,
         'per_page': per_page,
         'stats': stats,
+        'total_manutencoes': stats['total'],
+        'em_manutencao': stats['em_manutencao'],
+        'resolvidas': stats['resolvidos'],
+        'mttr_dias': stats['tempo_medio'],
         'filtros': filter_state,
         'situacao_choices': SituacaoManutencao.choices,
         'modelos_filtro': ModeloImpressora.objects.filter(ativo=True).order_by('nome'),
@@ -365,3 +475,203 @@ def manutencao_delete(request: HttpRequest, pk: int) -> HttpResponse:
         return response
 
     return redirect('manutencoes:manutencao_list')
+
+
+EXPORT_HEADERS = [
+    'ID',
+    'Modelo',
+    'Número de Série',
+    'Setor',
+    'Defeito',
+    'Data de Abertura',
+    'Data de Retorno',
+    'Situação',
+    'Tempo de Manutenção (Dias)',
+    'Observação',
+]
+
+
+def _serialize_manutencao_row(m: Manutencao) -> list:
+    tempo_dias = (
+        m.tempo_manutencao_dias
+        if m.situacao == SituacaoManutencao.RESOLVIDO and m.tempo_manutencao_dias is not None
+        else m.dias_em_aberto
+    )
+    return [
+        m.pk,
+        m.modelo.nome,
+        m.numero_serie.serial,
+        m.setor.nome,
+        m.defeito.descricao,
+        m.data_abertura.strftime('%d/%m/%Y') if m.data_abertura else '',
+        m.data_retorno.strftime('%d/%m/%Y') if m.data_retorno else '',
+        m.get_situacao_display(),
+        tempo_dias,
+        m.observacao or '',
+    ]
+
+
+def _col_letter(col_idx: int) -> str:
+    """Converte índice 1-based em coluna Excel (1 -> A, 26 -> Z, 27 -> AA)."""
+    letters = []
+    while col_idx > 0:
+        col_idx, rem = divmod(col_idx - 1, 26)
+        letters.append(chr(65 + rem))
+    return ''.join(reversed(letters))
+
+
+def _build_xlsx_bytes(headers: list[str], rows: list[list]) -> bytes:
+    """
+    Gera arquivo Excel (.xlsx) válido em memória.
+    Utiliza openpyxl se instalado no ambiente; caso contrário, gera pacote OOXML nativo
+    com cabeçalho estilizado e tipagem numérica/texto sem dependências extras.
+    """
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Alignment, Font, PatternFill
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Manutenções'
+        ws.append(headers)
+
+        header_fill = PatternFill(start_color='0F172A', end_color='0F172A', fill_type='solid')
+        header_font = Font(bold=True, color='FFFFFF')
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(vertical='center')
+
+        for row in rows:
+            ws.append(row)
+
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        return buffer.getvalue()
+    except ImportError:
+        pass
+
+    all_rows = [headers] + rows
+    sheet_rows_xml = []
+    for r_idx, row_values in enumerate(all_rows, start=1):
+        cells_xml = []
+        style_attr = ' s="1"' if r_idx == 1 else ''
+        for c_idx, val in enumerate(row_values, start=1):
+            ref = f'{_col_letter(c_idx)}{r_idx}'
+            if isinstance(val, (int, float)) and not isinstance(val, bool) and r_idx > 1:
+                cells_xml.append(f'<c r="{ref}" t="n"><v>{val}</v></c>')
+            else:
+                text = xml_escape(str(val if val is not None else ''))
+                cells_xml.append(
+                    f'<c r="{ref}" t="inlineStr"{style_attr}><is><t xml:space="preserve">{text}</t></is></c>'
+                )
+        sheet_rows_xml.append(f'<row r="{r_idx}">{"".join(cells_xml)}</row>')
+
+    worksheet_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        f'<sheetData>{"".join(sheet_rows_xml)}</sheetData>'
+        '</worksheet>'
+    )
+    content_types_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/xl/workbook.xml" '
+        'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        '<Override PartName="/xl/worksheets/sheet1.xml" '
+        'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        '<Override PartName="/xl/styles.xml" '
+        'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+        '</Types>'
+    )
+    rels_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" '
+        'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+        'Target="xl/workbook.xml"/>'
+        '</Relationships>'
+    )
+    workbook_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        '<sheets><sheet name="Manutencoes" sheetId="1" r:id="rId1"/></sheets>'
+        '</workbook>'
+    )
+    workbook_rels_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" '
+        'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" '
+        'Target="worksheets/sheet1.xml"/>'
+        '<Relationship Id="rId2" '
+        'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" '
+        'Target="styles.xml"/>'
+        '</Relationships>'
+    )
+    styles_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        '<fonts count="2">'
+        '<font><sz val="11"/><name val="Calibri"/></font>'
+        '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>'
+        '</fonts>'
+        '<fills count="3">'
+        '<fill><patternFill patternType="none"/></fill>'
+        '<fill><patternFill patternType="gray125"/></fill>'
+        '<fill><patternFill patternType="solid"><fgColor rgb="FF0F172A"/></patternFill></fill>'
+        '</fills>'
+        '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+        '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+        '<cellXfs count="2">'
+        '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+        '<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>'
+        '</cellXfs>'
+        '</styleSheet>'
+    )
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('[Content_Types].xml', content_types_xml)
+        zf.writestr('_rels/.rels', rels_xml)
+        zf.writestr('xl/workbook.xml', workbook_xml)
+        zf.writestr('xl/_rels/workbook.xml.rels', workbook_rels_xml)
+        zf.writestr('xl/styles.xml', styles_xml)
+        zf.writestr('xl/worksheets/sheet1.xml', worksheet_xml)
+    return buffer.getvalue()
+
+
+@require_GET
+def exportar_manutencoes(request: HttpRequest, formato: str | None = None) -> HttpResponse:
+    """
+    Exporta os registros de manutenção em formato CSV ou XLSX respeitando
+    exatamente os mesmos filtros aplicados na tela principal (_apply_filters).
+    """
+    fmt = (formato or request.GET.get('formato') or 'csv').strip().lower()
+    base_qs = _get_base_queryset()
+    filtered_qs, _ = _apply_filters(base_qs, request.GET)
+
+    rows = [_serialize_manutencao_row(m) for m in filtered_qs]
+    timestamp = timezone.localdate().strftime('%Y%m%d')
+
+    if fmt == 'xlsx':
+        xlsx_bytes = _build_xlsx_bytes(EXPORT_HEADERS, rows)
+        response = HttpResponse(
+            xlsx_bytes,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = f'attachment; filename="manutencoes_{timestamp}.xlsx"'
+        return response
+
+    # Exportação CSV (UTF-8 com BOM para abertura direta no Excel em Português)
+    delimiter = ';' if request.GET.get('sep') == ';' else ';'
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="manutencoes_{timestamp}.csv"'
+    response.write('\ufeff')
+    writer = csv.writer(response, delimiter=delimiter)
+    writer.writerow(EXPORT_HEADERS)
+    writer.writerows(rows)
+    return response

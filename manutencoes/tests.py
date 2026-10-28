@@ -226,3 +226,130 @@ class ManutencoesOperationalModuleTests(TestCase):
         self.assertEqual(resp_page2.status_code, 200)
         self.assertContains(resp_page2, 'Página 2 de 2')
         self.assertEqual(len(resp_page2.context['page_obj']), 3)
+
+    def test_dashboard_kpis_partial_computes_accurate_metrics(self):
+        # 1 em manutenção + 2 resolvidas (tempos: 4 dias e 6 dias -> MTTR = 5.0 dias)
+        Manutencao.objects.create(
+            modelo=self.modelo_ativo,
+            numero_serie=self.serial_ativo,
+            setor=self.setor_ativo,
+            defeito=self.defeito_ativo,
+            data_abertura=date(2026, 10, 1),
+        )
+        Manutencao.objects.create(
+            modelo=self.modelo_ativo,
+            numero_serie=self.serial_ativo_2,
+            setor=self.setor_ativo,
+            defeito=self.defeito_ativo,
+            data_abertura=date(2026, 10, 1),
+            data_retorno=date(2026, 10, 5),
+        )
+        Manutencao.objects.create(
+            modelo=self.modelo_ativo,
+            numero_serie=self.serial_ativo,
+            setor=self.setor_ativo_2,
+            defeito=self.defeito_ativo,
+            data_abertura=date(2026, 10, 10),
+            data_retorno=date(2026, 10, 16),
+        )
+
+        url = reverse('manutencoes:dashboard_kpis_partial')
+        response = self.client.get(url, HTTP_HX_REQUEST='true')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['total_manutencoes'], 3)
+        self.assertEqual(response.context['em_manutencao'], 1)
+        self.assertEqual(response.context['resolvidas'], 2)
+        self.assertEqual(response.context['mttr_dias'], 5.0)
+        self.assertContains(response, 'hx-trigger="manutencaoAtualizada from:body"')
+
+    def test_dashboard_charts_api_returns_structured_orm_aggregations_and_top_5(self):
+        modelos = [ModeloImpressora.objects.create(nome=f'MODELO {i}') for i in range(6)]
+        setores = [Setor.objects.create(nome=f'SETOR {i}') for i in range(6)]
+        defeitos = [TipoDefeito.objects.create(descricao=f'DEFEITO {i}') for i in range(6)]
+
+        # Cria volume decrescente para validar ordenação e corte em Top 5
+        for idx in range(6):
+            repeats = 6 - idx
+            for r in range(repeats):
+                is_resolved = (r % 2 == 0)
+                Manutencao.objects.create(
+                    modelo=modelos[idx],
+                    numero_serie=self.serial_ativo,
+                    setor=setores[idx],
+                    defeito=defeitos[idx],
+                    data_abertura=date(2026, 10, 1),
+                    data_retorno=date(2026, 10, 4) if is_resolved else None,
+                )
+
+        url = reverse('manutencoes:dashboard_charts_api')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+
+        self.assertEqual(data['kpis']['total'], 21)
+        self.assertEqual(
+            data['situacao']['data'][0] + data['situacao']['data'][1],
+            21,
+        )
+        self.assertEqual(len(data['top_modelos']['labels']), 5)
+        self.assertEqual(data['top_modelos']['labels'][0], 'MODELO 0')
+        self.assertEqual(data['top_modelos']['data'][0], 6)
+
+        self.assertEqual(len(data['top_setores']['labels']), 5)
+        self.assertEqual(data['top_setores']['labels'][0], 'SETOR 0')
+        self.assertEqual(data['top_setores']['data'][0], 6)
+
+        self.assertEqual(len(data['top_defeitos']['labels']), 5)
+        self.assertEqual(data['top_defeitos']['labels'][0], 'DEFEITO 0')
+        self.assertEqual(data['top_defeitos']['data'][0], 6)
+
+    def test_exportar_manutencoes_csv_and_xlsx_respects_filters(self):
+        import zipfile
+        import io
+
+        Manutencao.objects.create(
+            modelo=self.modelo_ativo,
+            numero_serie=self.serial_ativo,
+            setor=self.setor_ativo,
+            defeito=self.defeito_ativo,
+            data_abertura=date(2026, 10, 1),
+            observacao='Ordem em aberto na farmacia',
+        )
+        Manutencao.objects.create(
+            modelo=self.modelo_ativo,
+            numero_serie=self.serial_ativo_2,
+            setor=self.setor_ativo_2,
+            defeito=self.defeito_ativo,
+            data_abertura=date(2026, 10, 2),
+            data_retorno=date(2026, 10, 5),
+            observacao='Ordem resolvida na cirurgica',
+        )
+
+        # 1. Exportação CSV filtrando apenas situacao=MANUTENCAO e setor=setor_ativo
+        csv_url = reverse('manutencoes:exportar_manutencoes_formato', args=['csv'])
+        resp_csv = self.client.get(
+            csv_url,
+            data={'situacao': 'MANUTENCAO', 'setor': self.setor_ativo.pk},
+        )
+        self.assertEqual(resp_csv.status_code, 200)
+        self.assertIn('text/csv', resp_csv['Content-Type'])
+        content_csv = resp_csv.content.decode('utf-8-sig')
+        self.assertIn(self.serial_ativo.serial, content_csv)
+        self.assertNotIn(self.serial_ativo_2.serial, content_csv)
+        self.assertIn('Ordem em aberto na farmacia', content_csv)
+
+        # 2. Exportação XLSX filtrando por busca de serial 'BRCSJ7'
+        xlsx_url = reverse('manutencoes:exportar_manutencoes_formato', args=['xlsx'])
+        resp_xlsx = self.client.get(
+            xlsx_url,
+            data={'q': 'BRCSJ7'},
+        )
+        self.assertEqual(resp_xlsx.status_code, 200)
+        self.assertEqual(
+            resp_xlsx['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        with zipfile.ZipFile(io.BytesIO(resp_xlsx.content), 'r') as zf:
+            sheet_xml = zf.read('xl/worksheets/sheet1.xml').decode('utf-8')
+            self.assertIn(self.serial_ativo_2.serial, sheet_xml)
+            self.assertNotIn(self.serial_ativo.serial, sheet_xml)

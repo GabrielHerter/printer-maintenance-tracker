@@ -1,0 +1,86 @@
+<div id="painel-indicadores"
+     hx-get="{% url 'manutencoes:dashboard_kpis_partial' %}"
+     hx-trigger="manutencaoAtualizada from:body"
+     hx-swap="outerHTML"
+     hx-include="#form-filtros-manutencao"
+     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+
+    <!-- KPI 1: Total de Manutenções Registradas -->
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-3.5 shadow-xs flex items-center justify-between">
+        <div>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Total de Manutenções
+            </span>
+            <p id="stat-total" class="text-2xl font-bold text-slate-900 mt-0.5">
+                {{ total_manutencoes|default:stats.total|default:0 }}
+            </p>
+            <span class="text-[11px] text-slate-400">Ordens registradas</span>
+        </div>
+        <div class="h-11 w-11 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        </div>
+    </div>
+
+    <!-- KPI 2: Impressoras Atualmente em Manutenção (situacao='MANUTENCAO') -->
+    <div class="bg-amber-50/60 rounded-xl border border-amber-200 px-4 py-3.5 shadow-xs flex items-center justify-between">
+        <div>
+            <span class="text-xs font-semibold text-amber-800 uppercase tracking-wider">
+                Em Manutenção
+            </span>
+            <p id="stat-em-manutencao" class="text-2xl font-bold text-amber-700 mt-0.5">
+                {{ em_manutencao|default:stats.em_manutencao|default:0 }}
+            </p>
+            <span class="text-[11px] text-amber-700/80">Aguardando retorno</span>
+        </div>
+        <div class="h-11 w-11 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+    </div>
+
+    <!-- KPI 3: Manutenções Resolvidas (situacao='RESOLVIDO') -->
+    <div class="bg-emerald-50/60 rounded-xl border border-emerald-200 px-4 py-3.5 shadow-xs flex items-center justify-between">
+        <div>
+            <span class="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
+                Manutenções Resolvidas
+            </span>
+            <p id="stat-resolvidos" class="text-2xl font-bold text-emerald-700 mt-0.5">
+                {{ resolvidas|default:stats.resolvidos|default:0 }}
+            </p>
+            <span class="text-[11px] text-emerald-700/80">Concluídas com baixa</span>
+        </div>
+        <div class="h-11 w-11 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+    </div>
+
+    <!-- KPI 4: Tempo Médio de Reparo / MTTR em dias (Avg('tempo_manutencao_dias')) -->
+    <div class="bg-white rounded-xl border border-slate-200 px-4 py-3.5 shadow-xs flex items-center justify-between">
+        <div>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                MTTR &bull; Tempo Médio
+            </span>
+            <p id="stat-tempo-medio" class="text-2xl font-bold text-brand-700 mt-0.5">
+                {{ mttr_dias|default:stats.tempo_medio|default:0 }}
+                <span class="text-xs font-normal text-slate-500">dias</span>
+            </p>
+            <span class="text-[11px] text-slate-400">Média de reparo (resolvidos)</span>
+        </div>
+        <div class="h-11 w-11 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+        </div>
+    </div>
+
+</div>
+
